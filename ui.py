@@ -3,6 +3,15 @@ import yfinance as yf
 import pandas as pd
 import time
 from difflib import get_close_matches
+from watchlist import add_to_watchlist
+from live_data import live_price_fragment
+
+
+st.set_page_config(
+    page_title="TORO AI",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
 # ══════════════════════════
 # SESSION STATE
@@ -30,9 +39,9 @@ def get_realtime_price(stock):
                 'pct': pct,
                 'timestamp': time.time()
             }
-    except:
-        pass
-    return None
+    except Exception as e:
+     print(e)
+     return None
 
 # DELTA
 def get_delta_update(stock):
@@ -53,100 +62,105 @@ def get_delta_update(stock):
     
     return price_data
 
-# ══════════════════════════
-# RENDER HEADER
-# ══════════════════════════
-def render_header():
-    st.set_page_config(
-        page_title="TORO AI",
-        layout="wide",
-        initial_sidebar_state="collapsed"
-    )
 
+#==================
+# RENDER HEADER
+#==================
+def render_header():
     st.markdown("""
     <style>
-
-    /* ============================= */
-    /* PREMIUM THEME + FIXED HEADER  */
-    /* ============================= */
-
+                
     :root {
-        --bg-primary: #F8FAFC;
-        --bg-card: #FFFFFF;
-        --text-primary: #0F172A;
-        --text-secondary: #64748B;
-        --border-color: #E2E8F0;
-        --ai-accent: #4F46E5;
+    --buy-bg: rgba(34,197,94,0.12);
+    --buy-color: #16a34a;
+    --buy-border: rgba(34,197,94,0.28);
+
+    --sell-bg: rgba(239,68,68,0.12);
+    --sell-color: #dc2626;
+    --sell-border: rgba(239,68,68,0.28);
+
+    --neutral-bg: rgba(245,158,11,0.12);
+    --neutral-color: #d97706;
+    --neutral-border: rgba(245,158,11,0.28);
+}
+                
+
+    /* ===================================== */
+    /* CLEAN AUTO LIGHT + DARK THEME SUPPORT */
+    /* ===================================== */
+
+    /* Streamlit native theme support */
+    .stApp {
+        background-color: var(--background-color);
+        color: var(--text-color);
     }
 
-    /* Dark Mode Support */
-    [data-theme="dark"],
-    .dark,
-    .stApp[data-theme="dark"] {
-        --bg-primary: #0B1120;
-        --bg-card: #111827;
-        --text-primary: #F8FAFC;
-        --text-secondary: #CBD5E1;
-        --border-color: #334155;
-        --ai-accent: #818CF8;
-    }
-
-    /* Full Background */
-    .stApp,
-    .main,
+    /* Global spacing fix */
     .block-container {
-        background: var(--bg-primary) !important;
-        color: var(--text-primary) !important;
+        padding-top: 2.2rem !important;
+        padding-bottom: 1rem !important;
     }
 
-    /* VERY IMPORTANT → fixes hidden top logo */
-    .block-container {
-        padding-top: 2.5rem !important;
-    }
-
-    /* Remove white top strip */
+    /* Remove top white strip */
     header[data-testid="stHeader"] {
         background: transparent !important;
         height: 0px !important;
     }
 
-    /* Header Title */
+    /* Remove toolbar spacing issue */
+    div[data-testid="stToolbar"] {
+        top: 0.5rem;
+        right: 1rem;
+    }
+
+    /* Header text */
     .header-text h1 {
         font-size: 22px !important;
         font-weight: 700 !important;
-        color: var(--text-primary) !important;
         margin: 0 !important;
         padding: 0 !important;
         line-height: 1 !important;
+        color: inherit !important;
     }
 
     .header-text p {
         font-size: 11px !important;
-        color: var(--text-secondary) !important;
         margin: 0 !important;
         padding: 0 !important;
+        opacity: 0.75;
+        color: inherit !important;
     }
 
+    /* Divider */
     .divider {
         margin-top: 8px;
-        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 8px;
+        border-bottom: 1px solid rgba(150,150,150,0.25);
+    }
+
+    /* Search input width */
+    div[data-testid="stTextInput"] {
+        max-width: 320px !important;
     }
 
     @media (max-width: 768px) {
         .header-text h1 {
             font-size: 18px !important;
         }
+
+        div[data-testid="stTextInput"] {
+            max-width: 100% !important;
+        }
     }
 
     </style>
     """, unsafe_allow_html=True)
 
-    # slightly bigger left column so full logo is visible
-    col_img, col_text = st.columns([0.05, 0.93], gap="small")
+    # Better logo/title alignment
+    col_img, col_text = st.columns([0.08, 0.92], gap="small")
 
     with col_img:
-        # slightly smaller to avoid top cut
-        st.image("toro_ai_logo.png", width=100)
+        st.image("toro_ai_logo.png", width=85)
 
     with col_text:
         st.markdown("""
@@ -156,8 +170,10 @@ def render_header():
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
-
+    st.markdown(
+        '<div class="divider"></div>',
+        unsafe_allow_html=True
+    )
 
 # RENDER SEARCH
 def render_search_section(stocks_dict):
@@ -166,25 +182,15 @@ def render_search_section(stocks_dict):
     with left_col:
         st.markdown(
             """
-            <div style="font-size: 13px; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.5px; margin-bottom: 6px;">
+            <div style="
+                font-size: 13px;
+                color: var(--text-secondary);
+                font-weight: 600;
+                letter-spacing: 0.5px;
+                margin-bottom: 6px;
+            ">
                 🔍 SEARCH
             </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-        st.markdown(
-            """
-            <style>
-                div[data-testid="stTextInput"] {
-                    max-width: 320px !important;
-                }
-                @media (max-width: 768px) {
-                    div[data-testid="stTextInput"] {
-                        max-width: 100% !important;
-                    }
-                }
-            </style>
             """,
             unsafe_allow_html=True
         )
@@ -197,44 +203,77 @@ def render_search_section(stocks_dict):
         ).upper().strip()
 
         stock = ""
+        matches = []
 
         if search:
-            # First try exact match
+
+            # 1. Exact match (best)
             if search in stocks_dict:
-                stock = stocks_dict[search]
                 matches = [search]
+
+            # 2. Starts with match
+            elif any(name.startswith(search) for name in stocks_dict.keys()):
+                matches = [
+                    name for name in stocks_dict.keys()
+                    if name.startswith(search)
+                ][:5]
+
+            # 3. Contains match
+            elif any(search in name for name in stocks_dict.keys()):
+                matches = [
+                    name for name in stocks_dict.keys()
+                    if search in name
+                ][:5]
+
+            # 4. Close match fallback
             else:
-                # Try partial match with stricter cutoff
-                matches = get_close_matches(search, list(stocks_dict.keys()), n=4, cutoff=0.5)
-                
-                if not matches:
-                    # Try matching by searching INSIDE stock names
-                    matches = [name for name in stocks_dict.keys() if search in name][:4]
-                
-                if matches:
-                    stock = stocks_dict[matches[0]]
-                else:
-                    stock = search if ".NS" in search else search + ".NS"
-                    matches = []
-            
+                matches = get_close_matches(
+                    search,
+                    list(stocks_dict.keys()),
+                    n=5,
+                    cutoff=0.7
+                )
+
             if matches:
+                stock = stocks_dict[matches[0]]
+
                 col_a, col_b = st.columns([4, 1])
+
                 with col_a:
                     st.caption(f"✅ {matches[0]}")
+
                 with col_b:
-                    from watchlist import add_to_watchlist
-                    if st.button("⭐", key="add_watchlist", help="Add to watchlist"):
+                    if st.button(
+                        "⭐",
+                        key="add_watchlist",
+                        help="Add to watchlist"
+                    ):
                         if add_to_watchlist(stock, matches[0]):
-                            st.toast(f"✅ {matches[0]} added!", icon="⭐")
+                            st.toast(
+                                f"✅ {matches[0]} added!",
+                                icon="⭐"
+                            )
                         else:
-                            st.toast("Already in watchlist!", icon="⚠️")
+                            st.toast(
+                                "Already in watchlist!",
+                                icon="⚠️"
+                            )
+
             else:
+                stock = search if ".NS" in search else search + ".NS"
                 st.caption(f"🔍 No match. Using: {stock}")
+
         else:
             st.caption("💡 Type RELIANCE, TCS, INFY...")
 
-        st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
-        screener_clicked = st.button("🔍 Run Smart Screener")
+        st.markdown(
+            "<div style='height:10px;'></div>",
+            unsafe_allow_html=True
+        )
+
+        screener_clicked = st.button(
+            "🔍 Run Smart Screener"
+        )
 
     with right_col:
         pass
@@ -262,7 +301,6 @@ def render_metrics(data, buy, sell, stock):
 
     # ── BOX 1: LIVE PRICE ──
     with col1:
-        from live_data import live_price_fragment
         live_price_fragment(stock)
 
     # ── BOX 2: RSI ──
