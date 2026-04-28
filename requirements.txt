@@ -5,3 +5,4 @@ feedparser
 streamlit-autorefresh
 plotly
 groq
+matplotlib
