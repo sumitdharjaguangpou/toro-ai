@@ -4,7 +4,8 @@ import streamlit as st
 import time
 
 # Configure Groq
-GROQ_API_KEY = "GROQ_API_KEY"#api key here
+import os
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "gsk_YOUR_KEY_HERE")
 client = Groq(api_key=GROQ_API_KEY)
 
 def ai_analyze_stock(stock_name, technical_data):
