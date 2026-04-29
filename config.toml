@@ -1,25 +1,14 @@
 # .streamlit/config.toml
-
 [theme]
-base = "dark"
-primaryColor = "#00ffff"
-backgroundColor = "#0a0e27"
-secondaryBackgroundColor = "#1a1f3a"
-textColor = "#ffffff"
-font = "sans serif"
+base="dark"
+primaryColor="#00ffff"
+backgroundColor="#0a0e27"
+secondaryBackgroundColor="#1a1f3a"
+textColor="#ffffff"
+font="sans serif"
 
 [server]
-maxUploadSize = 10
-enableXsrfProtection = true
-enableCORS = false
+maxUploadSize=10
 
 [browser]
-gatherUsageStats = false
-serverAddress = "localhost"
-serverPort = 8501
-
-[logger]
-level = "info"
-
-[runner]
-magicEnabled = false
+gatherUsageStats=false
