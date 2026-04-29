@@ -408,12 +408,15 @@ def render_header():
 # =========================
 # RENDER SEARCH
 # =========================
+# =========================
+# RENDER SEARCH
+# =========================
 def render_search_section(stocks_dict):
     left_col, right_col = st.columns([4, 6])
 
     with left_col:
         # =========================
-        # FUTURISTIC CSS STYLING
+        # FUTURISTIC CSS STYLING (DARK THEME ONLY)
         # =========================
         st.markdown(
             """
@@ -735,7 +738,6 @@ def render_search_section(stocks_dict):
         pass
 
     return search, stock, screener_clicked
-
 
 
 
