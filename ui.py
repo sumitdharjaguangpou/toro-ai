@@ -157,7 +157,7 @@ def render_header():
     """, unsafe_allow_html=True)
 
     # Better logo/title alignment
-    col_img, col_text = st.columns([0.08, 0.92], gap="small")
+    col_img, col_text = st.columns([0.06, 0.94], gap="small")
 
     with col_img:
         st.image("toro_ai_logo.png", width=85)
@@ -175,29 +175,206 @@ def render_header():
         unsafe_allow_html=True
     )
 
+
+# =========================
 # RENDER SEARCH
+# =========================
 def render_search_section(stocks_dict):
     left_col, right_col = st.columns([4, 6])
 
     with left_col:
+        # =========================
+        # FUTURISTIC CSS STYLING
+        # =========================
         st.markdown(
             """
-            <div style="
-                font-size: 13px;
-                color: var(--text-secondary);
-                font-weight: 600;
-                letter-spacing: 0.5px;
-                margin-bottom: 6px;
-            ">
-                🔍 SEARCH
-            </div>
+            <style>
+                /* Container styling */
+                [data-testid="column"] {
+                    background: linear-gradient(135deg, rgba(10, 20, 40, 0.95) 0%, rgba(5, 10, 20, 0.98) 100%);
+                    border-radius: 20px;
+                    padding: 20px;
+                    border: 1px solid rgba(0, 255, 255, 0.2);
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+                }
+
+                /* Search label styling */
+                .search-label {
+                    font-size: 14px;
+                    font-weight: 700;
+                    letter-spacing: 2px;
+                    margin-bottom: 12px;
+                    background: linear-gradient(135deg, #00ffff, #ff00ff);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                    text-transform: uppercase;
+                }
+
+                /* Search input field */
+                div[data-testid="stTextInput"] {
+                    width: 100% !important;
+                    margin-bottom: 20px;
+                }
+
+                div[data-testid="stTextInput"] input {
+                    background: rgba(0, 20, 40, 0.8) !important;
+                    border: 2px solid rgba(0, 255, 255, 0.3) !important;
+                    border-radius: 12px !important;
+                    color: #00ffff !important;
+                    font-size: 15px !important;
+                    padding: 12px 15px !important;
+                    transition: all 0.3s ease !important;
+                    box-shadow: 0 0 10px rgba(0, 255, 255, 0.1) !important;
+                }
+
+                div[data-testid="stTextInput"] input:focus {
+                    border-color: #ff00ff !important;
+                    box-shadow: 0 0 20px rgba(255, 0, 255, 0.3) !important;
+                    outline: none !important;
+                }
+
+                div[data-testid="stTextInput"] input::placeholder {
+                    color: rgba(0, 255, 255, 0.5) !important;
+                    font-size: 13px !important;
+                }
+
+                /* Caption styling */
+                .stCaption {
+                    color: #00ffff !important;
+                    font-size: 12px !important;
+                    letter-spacing: 0.5px !important;
+                }
+
+                /* Warning message styling */
+                .stAlert {
+                    background: rgba(255, 100, 0, 0.1) !important;
+                    border: 1px solid #ff6600 !important;
+                    border-radius: 10px !important;
+                    color: #ffaa00 !important;
+                }
+
+                /* Futuristic Button Styling */
+                div.stButton > button {
+                    background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(255, 0, 255, 0.1)) !important;
+                    border: 1px solid rgba(0, 255, 255, 0.5) !important;
+                    border-radius: 12px !important;
+                    color: #00ffff !important;
+                    font-weight: 600 !important;
+                    font-size: 14px !important;
+                    padding: 10px 20px !important;
+                    transition: all 0.3s ease !important;
+                    letter-spacing: 1px !important;
+                    backdrop-filter: blur(10px) !important;
+                }
+
+                div.stButton > button:hover {
+                    transform: translateY(-2px) !important;
+                    border-color: #ff00ff !important;
+                    box-shadow: 0 0 25px rgba(255, 0, 255, 0.4) !important;
+                    color: #ffffff !important;
+                }
+
+                /* Suggestion buttons styling */
+                div.stButton > button[key^="suggestion_"] {
+                    background: linear-gradient(135deg, rgba(0, 50, 80, 0.8), rgba(80, 0, 120, 0.8)) !important;
+                    border: 1px solid rgba(0, 255, 255, 0.4) !important;
+                    justify-content: space-between !important;
+                    text-align: left !important;
+                    font-weight: 600 !important;
+                }
+
+                div.stButton > button[key^="suggestion_"]:hover {
+                    background: linear-gradient(135deg, rgba(0, 100, 150, 0.9), rgba(150, 0, 200, 0.9)) !important;
+                    border-color: #ff00ff !important;
+                }
+
+                /* AI Screener Button - Special Futuristic */
+                div.stButton > button[key="ai_screener_btn"] {
+                    background: linear-gradient(135deg, #000428, #004e92) !important;
+                    background-size: 200% 200% !important;
+                    border: 2px solid rgba(0, 255, 255, 0.8) !important;
+                    color: #00ffff !important;
+                    font-size: 14px !important;
+                    font-weight: 800 !important;
+                    text-transform: uppercase !important;
+                    letter-spacing: 2px !important;
+                    animation: gradientShift 3s ease infinite, pulse 2s ease-in-out infinite !important;
+                    margin-top: 20px !important;
+                    position: relative !important;
+                    overflow: hidden !important;
+                }
+
+                @keyframes gradientShift {
+                    0%, 100% { background-position: 0% 50%; }
+                    50% { background-position: 100% 50%; }
+                }
+
+                @keyframes pulse {
+                    0%, 100% {
+                        box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+                        border-color: rgba(0, 255, 255, 0.8);
+                    }
+                    50% {
+                        box-shadow: 0 0 40px rgba(0, 255, 255, 0.6), 0 0 20px rgba(255, 0, 255, 0.3);
+                        border-color: #ff00ff;
+                    }
+                }
+
+                div.stButton > button[key="ai_screener_btn"]::before {
+                    content: '';
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    width: 0;
+                    height: 0;
+                    border-radius: 50%;
+                    background: radial-gradient(circle, rgba(0,255,255,0.3), rgba(255,0,255,0));
+                    transform: translate(-50%, -50%);
+                    transition: width 0.6s, height 0.6s;
+                }
+
+                div.stButton > button[key="ai_screener_btn"]:hover::before {
+                    width: 300px;
+                    height: 300px;
+                }
+
+                /* Toast notifications styling */
+                .stToast {
+                    background: linear-gradient(135deg, #1a1a2e, #16213e) !important;
+                    border: 1px solid #00ffff !important;
+                    border-radius: 12px !important;
+                    color: #00ffff !important;
+                }
+
+                /* Divider styling */
+                .custom-divider {
+                    height: 2px;
+                    background: linear-gradient(90deg, transparent, #00ffff, #ff00ff, transparent);
+                    margin: 20px 0;
+                }
+            </style>
             """,
             unsafe_allow_html=True
         )
 
+        # Search Header with futuristic glow
+        st.markdown(
+            """
+            <div class="search-label">
+                ⚡ NEURAL SEARCH INTERFACE ⚡
+            </div>
+            <div class="custom-divider"></div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        # =========================
+        # SEARCH INPUT
+        # =========================
         search = st.text_input(
             "",
-            placeholder="Symbol...",
+            placeholder="🔍 ENTER STOCK SYMBOL...",
             label_visibility="collapsed",
             key="search_input"
         ).upper().strip()
@@ -206,26 +383,25 @@ def render_search_section(stocks_dict):
         matches = []
 
         if search:
-
-            # 1. Exact match (best)
+            # Exact match
             if search in stocks_dict:
                 matches = [search]
 
-            # 2. Starts with match
+            # Starts with
             elif any(name.startswith(search) for name in stocks_dict.keys()):
                 matches = [
                     name for name in stocks_dict.keys()
                     if name.startswith(search)
                 ][:5]
 
-            # 3. Contains match
+            # Contains
             elif any(search in name for name in stocks_dict.keys()):
                 matches = [
                     name for name in stocks_dict.keys()
                     if search in name
                 ][:5]
 
-            # 4. Close match fallback
+            # Fuzzy match
             else:
                 matches = get_close_matches(
                     search,
@@ -235,50 +411,105 @@ def render_search_section(stocks_dict):
                 )
 
             if matches:
-                stock = stocks_dict[matches[0]]
+                st.markdown(
+                    """
+                    <div style="color: #00ffff; font-size: 12px; margin: 10px 0 5px 0; letter-spacing: 1px;">
+                        ━━━ AI SUGGESTIONS ━━━
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
-                col_a, col_b = st.columns([4, 1])
+                # Display suggestion buttons
+                for i, match in enumerate(matches[:3]):  # Show top 3 suggestions
+                    col1, col2 = st.columns([8, 2])
+                    with col1:
+                        if st.button(
+                            f"📊 {match}",
+                            key=f"suggestion_{i}",
+                            use_container_width=True,
+                            help=f"Select {match}"
+                        ):
+                            stock = stocks_dict[match]
+                            st.session_state.selected_stock = stock
+                            st.session_state.selected_symbol = match
+                            st.toast(f"🎯 {match} selected!", icon="✅")
+                    
+                    with col2:
+                        if st.button(
+                            "⭐",
+                            key=f"watchlist_{i}",
+                            help=f"Add {match} to watchlist"
+                        ):
+                            if add_to_watchlist(stocks_dict[match], match):
+                                st.toast(f"⭐ {match} added to watchlist!", icon="✨")
+                            else:
+                                st.toast(f"⚠️ {match} already in watchlist!", icon="📌")
 
-                with col_a:
-                    st.caption(f"✅ {matches[0]}")
-
-                with col_b:
-                    if st.button(
-                        "⭐",
-                        key="add_watchlist",
-                        help="Add to watchlist"
-                    ):
-                        if add_to_watchlist(stock, matches[0]):
-                            st.toast(
-                                f"✅ {matches[0]} added!",
-                                icon="⭐"
-                            )
-                        else:
-                            st.toast(
-                                "Already in watchlist!",
-                                icon="⚠️"
-                            )
+                if matches and not stock:
+                    # Auto-select the first match
+                    stock = stocks_dict[matches[0]]
+                    
+                if stock:
+                    st.markdown(
+                        f"""
+                        <div style="
+                            background: linear-gradient(135deg, rgba(0,255,255,0.1), rgba(255,0,255,0.1));
+                            border-left: 4px solid #00ffff;
+                            border-radius: 8px;
+                            padding: 10px;
+                            margin: 10px 0;
+                        ">
+                            <span style="color: #00ffff; font-size: 12px;">🎯 ACTIVE STOCK:</span>
+                            <span style="color: #ffffff; font-weight: bold; margin-left: 10px;">{matches[0]}</span>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
 
             else:
                 stock = search if ".NS" in search else search + ".NS"
-                st.caption(f"🔍 No match. Using: {stock}")
+                st.warning(f"🔍 No match found. Using fallback: {stock}")
 
         else:
-              st.caption("💡 Start typing a stock name or symbol to see suggestions...")
+            st.markdown(
+                """
+                <div style="
+                    background: rgba(0, 255, 255, 0.05);
+                    border-radius: 10px;
+                    padding: 15px;
+                    text-align: center;
+                    margin: 10px 0;
+                ">
+                    <span style="color: rgba(0, 255, 255, 0.7); font-size: 13px;">
+                        💡 Begin typing a stock symbol to activate neural search...
+                    </span>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
-        st.markdown(
-            "<div style='height:10px;'></div>",
-            unsafe_allow_html=True
-        )
+        st.markdown("<div class='custom-divider'></div>", unsafe_allow_html=True)
 
+        # =========================
+        # AI SMART SCREENER BUTTON
+        # =========================
         screener_clicked = st.button(
-            "🔍 Run Smart Screener"
+            "🤖 AI QUANTUM SCREENER ⚡",
+            key="ai_screener_btn",
+            use_container_width=True,
+            help="Activate Advanced AI-Powered Stock Screening"
         )
 
     with right_col:
+        # You can add additional content here
         pass
 
     return search, stock, screener_clicked
+
+
+
+
 
 
 
