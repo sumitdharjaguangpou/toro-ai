@@ -71,22 +71,22 @@ def render_header():
     <style>
                 
     :root {
-    --buy-bg: rgba(34,197,94,0.12);
-    --buy-color: #16a34a;
-    --buy-border: rgba(34,197,94,0.28);
+        --buy-bg: rgba(34,197,94,0.12);
+        --buy-color: #16a34a;
+        --buy-border: rgba(34,197,94,0.28);
 
-    --sell-bg: rgba(239,68,68,0.12);
-    --sell-color: #dc2626;
-    --sell-border: rgba(239,68,68,0.28);
+        --sell-bg: rgba(239,68,68,0.12);
+        --sell-color: #dc2626;
+        --sell-border: rgba(239,68,68,0.28);
 
-    --neutral-bg: rgba(245,158,11,0.12);
-    --neutral-color: #d97706;
-    --neutral-border: rgba(245,158,11,0.28);
-}
+        --neutral-bg: rgba(245,158,11,0.12);
+        --neutral-color: #d97706;
+        --neutral-border: rgba(245,158,11,0.28);
+    }
                 
-
     /* ===================================== */
-    /* CLEAN AUTO LIGHT + DARK THEME SUPPORT */
+    /* ADAPTIVE TORO AI HEADER STYLES        */
+    /* WORKS IN BOTH DARK & LIGHT MODE       */
     /* ===================================== */
 
     /* Streamlit native theme support */
@@ -97,7 +97,7 @@ def render_header():
 
     /* Global spacing fix */
     .block-container {
-        padding-top: 2.2rem !important;
+        padding-top: 1.5rem !important;
         padding-bottom: 1rem !important;
     }
 
@@ -113,29 +113,229 @@ def render_header():
         right: 1rem;
     }
 
-    /* Header text */
-    .header-text h1 {
-        font-size: 22px !important;
-        font-weight: 700 !important;
+    /* ===================================== */
+    /* ADAPTIVE HEADER - DETECTS THEME       */
+    /* ===================================== */
+    
+    /* Container styling - adapts to theme */
+    .toro-header-container {
+        background: linear-gradient(135deg, 
+            rgba(0, 20, 40, 0.08), 
+            rgba(10, 5, 20, 0.05));
+        border-radius: 20px;
+        padding: 15px 20px;
+        margin-bottom: 15px;
+        border: 1px solid rgba(0, 150, 200, 0.3);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+    }
+    
+    /* Dark mode specific container */
+    @media (prefers-color-scheme: dark) {
+        .toro-header-container {
+            background: linear-gradient(135deg, 
+                rgba(0, 20, 40, 0.95), 
+                rgba(10, 5, 20, 0.98));
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+    }
+    
+    /* Logo styling - adaptive glow */
+    img {
+        filter: drop-shadow(0 0 8px rgba(0, 150, 200, 0.4));
+        transition: all 0.3s ease;
+    }
+    
+    img:hover {
+        filter: drop-shadow(0 0 15px rgba(255, 80, 200, 0.6));
+        transform: scale(1.05);
+    }
+    
+    @keyframes logoGlow {
+        0%, 100% {
+            filter: drop-shadow(0 0 8px rgba(0, 150, 200, 0.4));
+        }
+        50% {
+            filter: drop-shadow(0 0 15px rgba(0, 150, 200, 0.6));
+        }
+    }
+    
+    @media (prefers-color-scheme: dark) {
+        img {
+            filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.5));
+            animation: logoGlow 3s ease-in-out infinite;
+        }
+        
+        img:hover {
+            filter: drop-shadow(0 0 20px rgba(255, 0, 255, 0.8));
+        }
+        
+        @keyframes logoGlow {
+            0%, 100% {
+                filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.5));
+            }
+            50% {
+                filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.8));
+            }
+        }
+    }
+    
+    /* Title styling - high contrast for both themes */
+    .toro-title {
+        font-size: 32px !important;
+        font-weight: 800 !important;
         margin: 0 !important;
         padding: 0 !important;
-        line-height: 1 !important;
-        color: inherit !important;
+        line-height: 1.2 !important;
+        background: linear-gradient(135deg, 
+            #0066cc 0%, 
+            #9900cc 50%, 
+            #0066cc 100%);
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: 3px;
+        text-transform: uppercase;
     }
-
-    .header-text p {
-        font-size: 11px !important;
-        margin: 0 !important;
+    
+    /* Animated gradient for dark mode */
+    @media (prefers-color-scheme: dark) {
+        .toro-title {
+            background: linear-gradient(135deg, 
+                #00ffff 0%, 
+                #ff00ff 50%, 
+                #00ffff 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: titleShine 3s linear infinite;
+        }
+        
+        @keyframes titleShine {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+    }
+    
+    /* Subtitle styling - adaptive colors */
+    .toro-subtitle {
+        font-size: 12px !important;
+        margin: 5px 0 0 0 !important;
         padding: 0 !important;
-        opacity: 0.75;
-        color: inherit !important;
+        background: linear-gradient(135deg, #0066cc, #ff8800);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: 2px;
+        font-weight: 600;
+        text-transform: uppercase;
     }
-
-    /* Divider */
-    .divider {
-        margin-top: 8px;
-        margin-bottom: 8px;
-        border-bottom: 1px solid rgba(150,150,150,0.25);
+    
+    @media (prefers-color-scheme: dark) {
+        .toro-subtitle {
+            background: linear-gradient(135deg, #00ffff, #ffaa00);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    }
+    
+    /* Badge styling - visible in both themes */
+    .ai-badge {
+        display: inline-block;
+        background: rgba(0, 100, 200, 0.1);
+        border: 1px solid rgba(0, 100, 200, 0.5);
+        border-radius: 20px;
+        padding: 2px 10px;
+        font-size: 9px;
+        margin-left: 12px;
+        color: #0066cc;
+        font-weight: 700;
+        letter-spacing: 1px;
+        vertical-align: middle;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+        .ai-badge {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.5);
+            color: #00ffff;
+            animation: badgePulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes badgePulse {
+            0%, 100% {
+                opacity: 0.7;
+                border-color: rgba(0, 255, 255, 0.5);
+            }
+            50% {
+                opacity: 1;
+                border-color: rgba(255, 0, 255, 0.8);
+            }
+        }
+    }
+    
+    /* Divider styling - adaptive */
+    .neon-divider {
+        margin: 15px 0 10px 0;
+        height: 2px;
+        background: linear-gradient(90deg, 
+            transparent, 
+            #0066cc, 
+            #9900cc, 
+            #0066cc, 
+            transparent);
+    }
+    
+    @media (prefers-color-scheme: dark) {
+        .neon-divider {
+            background: linear-gradient(90deg, 
+                transparent, 
+                #00ffff, 
+                #ff00ff, 
+                #00ffff, 
+                transparent);
+            animation: dividerFlow 3s linear infinite;
+            background-size: 200% auto;
+        }
+        
+        @keyframes dividerFlow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+    }
+    
+    /* Info bar styling - adaptive */
+    .info-bar {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 15px;
+        font-size: 10px;
+        letter-spacing: 1px;
+        color: #666;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+        .info-bar {
+            color: rgba(0, 255, 255, 0.6);
+        }
+    }
+    
+    /* Hover effect for container */
+    .toro-header-container:hover {
+        border-color: rgba(0, 150, 200, 0.6);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+    
+    @media (prefers-color-scheme: dark) {
+        .toro-header-container:hover {
+            border-color: rgba(0, 255, 255, 0.5);
+            box-shadow: 0 8px 32px rgba(0, 255, 255, 0.2);
+        }
     }
 
     /* Search input width */
@@ -144,37 +344,66 @@ def render_header():
     }
 
     @media (max-width: 768px) {
-        .header-text h1 {
-            font-size: 18px !important;
+        .toro-title {
+            font-size: 22px !important;
+            letter-spacing: 2px;
+        }
+        
+        .toro-subtitle {
+            font-size: 9px !important;
+            letter-spacing: 1px;
+        }
+        
+        .ai-badge {
+            font-size: 7px !important;
+            padding: 1px 6px !important;
+            margin-left: 8px !important;
         }
 
         div[data-testid="stTextInput"] {
             max-width: 100% !important;
         }
+        
+        .info-bar {
+            font-size: 8px !important;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
     }
-
+    
     </style>
     """, unsafe_allow_html=True)
 
-    # Better logo/title alignment
-    col_img, col_text = st.columns([0.06, 0.94], gap="small")
+    # Premium header layout with enhanced styling
+    st.markdown('<div class="toro-header-container">', unsafe_allow_html=True)
+    
+    col_img, col_text = st.columns([0.12, 0.88], gap="small")
 
     with col_img:
-        st.image("toro_ai_logo.png", width=85)
+        st.image("toro_ai_logo.png", width=80)
 
     with col_text:
         st.markdown("""
-        <div class="header-text">
-            <h1>TORO AI</h1>
-            <p>AI Stock Intelligence</p>
+        <div>
+            <span class="toro-title">TORO AI</span>
+            <span class="ai-badge">⚡ QUANTUM AI ⚡</span>
+            <div class="toro-subtitle">🔮 Neural Stock Intelligence & Predictive Analytics 🔮</div>
         </div>
         """, unsafe_allow_html=True)
-
-    st.markdown(
-        '<div class="divider"></div>',
-        unsafe_allow_html=True
-    )
-
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Animated neon divider
+    st.markdown('<div class="neon-divider"></div>', unsafe_allow_html=True)
+    
+    # Adaptive stats bar
+    st.markdown("""
+    <div class="info-bar">
+        <span>🚀 REAL-TIME MARKET DATA</span>
+        <span>⚡ AI-POWERED INSIGHTS</span>
+        <span>📊 SMART SCREENING</span>
+    </div>
+    """, unsafe_allow_html=True)
 
 # =========================
 # RENDER SEARCH
