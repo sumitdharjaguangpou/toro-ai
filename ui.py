@@ -264,7 +264,7 @@ def render_search_section(stocks_dict):
                 st.caption(f"🔍 No match. Using: {stock}")
 
         else:
-            st.caption("💡 Type RELIANCE, TCS, INFY...")
+              st.caption("💡 Start typing a stock name or symbol to see suggestions...")
 
         st.markdown(
             "<div style='height:10px;'></div>",
