@@ -964,7 +964,6 @@ def render_news(news):
             unsafe_allow_html=True
         )
 
-
 # RENDER CONTACT
 def render_contact():
     st.markdown("---")
