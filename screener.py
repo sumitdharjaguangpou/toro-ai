@@ -522,7 +522,7 @@ def display_screener_results(results):
             </div>
         </div>
         """,
-        height=400,
+        height=410,
         scrolling=False
         )
     else:
