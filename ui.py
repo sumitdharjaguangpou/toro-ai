@@ -408,9 +408,6 @@ def render_header():
 # =========================
 # RENDER SEARCH
 # =========================
-# =========================
-# RENDER SEARCH
-# =========================
 def render_search_section(stocks_dict):
     left_col, right_col = st.columns([4, 6])
 
@@ -929,11 +926,22 @@ def render_metrics(data, buy, sell, stock):
             unsafe_allow_html=True
         )
 
+#========================
 # RENDER NEWS
+#========================
 def render_news(news):
     st.subheader("📰 Market News")
 
     for item in news:
+        # Sentiment icon
+        sentiment_icon = ""
+        if item.get('sentiment') == 'positive':
+            sentiment_icon = "🟢 "
+        elif item.get('sentiment') == 'negative':
+            sentiment_icon = "🔴 "
+        elif item.get('sentiment') == 'neutral':
+            sentiment_icon = "⚪ "
+        
         st.markdown(
             f"""
             <div style='
@@ -944,7 +952,7 @@ def render_news(news):
                 margin-bottom: 8px;
             '>
                 <p style='margin:0; font-size:15px; line-height:1.4;'>
-                    🔹 <a href='{item['link']}' target='_blank' style='text-decoration:none; color: var(--ai-border, #6366f1);'>
+                    {sentiment_icon}🔹 <a href='{item['link']}' target='_blank' style='text-decoration:none; color: var(--ai-border, #6366f1);'>
                         {item['title']}
                     </a>
                 </p>
