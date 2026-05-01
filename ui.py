@@ -7,8 +7,12 @@ from watchlist import add_to_watchlist
 from live_data import live_price_fragment
 
 
+# ==========================================
+# PAGE CONFIGURATION
+# ==========================================
 st.set_page_config(
-    page_title="TORO AI",
+    page_title="TORO AI - Quantum Stock Intelligence",
+    page_icon="🐂",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
