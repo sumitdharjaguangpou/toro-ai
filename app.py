@@ -8,6 +8,7 @@ import feedparser
 from urllib.parse import quote_plus
 
 from signals import getsignal
+from news import get_stock_news
 from stocks import stocks_dict
 from charts import plot_price_chart
 from watchlist import load_watchlist, watchlist_fragment
@@ -42,55 +43,6 @@ if "watchlist" not in st.session_state:
 def fetch_stock_data(stock, period, interval):
     ticker = yf.Ticker(stock)
     return ticker.history(period=period, interval=interval)
-
-
-# ==========================================
-# NEWS FETCHING FUNCTION
-# ==========================================
-def get_stock_news(stock_name):
-    try:
-        query = quote_plus(stock_name)
-        url = (
-            f"https://news.google.com/rss/search?q={query}%20stock"
-            f"&hl=en-IN&gl=IN&ceid=IN:en"
-        )
-
-        feed = feedparser.parse(url)
-
-        if feed.bozo:
-            return [{
-                "title": "⚠️ Error fetching news.",
-                "link": "",
-                "source": "",
-                "time": ""
-            }]
-
-        if not feed.entries:
-            return [{
-                "title": "❌ No news found.",
-                "link": "",
-                "source": "",
-                "time": ""
-            }]
-
-        news_list = []
-        for entry in feed.entries[:5]:
-            news_list.append({
-                "title": entry.get("title", "No title"),
-                "link": entry.get("link", "#"),
-                "source": entry.get("source", {}).get("title", "Unknown"),
-                "time": entry.get("published", "No time")
-            })
-
-        return news_list
-
-    except Exception as e:
-        return [{
-            "title": f"⚠️ Error: {str(e)}",
-            "link": "",
-            "source": "",
-            "time": ""
-        }]
 
 
 # ==========================================
