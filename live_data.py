@@ -1,10 +1,9 @@
-# live_data.py
+# live_data.py - Fixed version
 import streamlit as st
 import yfinance as yf
 
-@st.fragment(run_every=5)
 def live_price_fragment(stock):
-    """Updates ONLY the live price every 5 seconds"""
+    """Updates ONLY the live price"""
     try:
         ticker = yf.Ticker(stock)
         info = ticker.fast_info
@@ -28,24 +27,25 @@ def live_price_fragment(stock):
             
             html_code = f"""
             <div style="
-                background: #ffffff;
-                border: 1px solid #e2e8f0;
-                border-radius: 8px;
-                padding: 8px 4px;
+                background: linear-gradient(135deg, rgba(10,20,40,0.95), rgba(5,10,20,0.98));
+                border: 1px solid rgba(0,255,255,0.2);
+                border-radius: 12px;
+                padding: 12px 8px;
                 text-align: center;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             ">
-                <div style="font-size: 10px; color: #64748b; margin-bottom: 2px; font-weight: 600;">💰 LIVE</div>
-                <div style="font-size: 18px; font-weight: 700; color: #0f172a; line-height: 1.1; margin-bottom: 4px;">
+                <div style="font-size: 10px; color: #00ffff; margin-bottom: 4px; font-weight: 600; letter-spacing: 1px;">💰 LIVE PRICE</div>
+                <div style="font-size: 22px; font-weight: 800; color: #ffffff; line-height: 1.1; margin-bottom: 6px;">
                     ₹{live_price:,.2f}
                 </div>
                 <div style="
                     display: inline-block;
-                    padding: 2px 8px;
-                    border-radius: 10px;
-                    font-weight: 600;
+                    padding: 3px 10px;
+                    border-radius: 20px;
+                    font-weight: 700;
                     background-color: {bg};
                     color: {clr};
-                    font-size: 10px;
+                    font-size: 11px;
                     border: 1px solid {bd};
                 ">
                     {arrow} ₹{abs(change):.2f} ({abs(pct):.2f}%)
@@ -54,5 +54,7 @@ def live_price_fragment(stock):
             """
             
             st.markdown(html_code, unsafe_allow_html=True)
-    except:
-        pass
+        else:
+            st.warning("⚠️ Live price not available")
+    except Exception as e:
+        st.warning(f"⚠️ Price feed unavailable")
