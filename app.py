@@ -326,7 +326,7 @@ if 'show_backtest_page' not in st.session_state:
     st.session_state['show_backtest_page'] = False
 
 if 'trading_mode' not in st.session_state:
-    st.session_state['trading_mode'] = "Aggressive (High Returns)"
+    st.session_state['trading_mode'] = "Aggressive"
 
 
 # ==========================================
@@ -415,13 +415,14 @@ with st.sidebar:
             
             # Trading Mode
             st.markdown("### 🎯 Mode")
-            trading_mode = st.selectbox(
+            st.session_state['trading_mode'] = st.selectbox(
                 "Strategy",
                 ["Conservative", "Aggressive", "Ultra Aggressive"],
-                index=1,
+                index=["Conservative", "Aggressive", "Ultra Aggressive"].index(
+                    st.session_state['trading_mode']
+                ),
                 label_visibility="collapsed"
             )
-            st.session_state['trading_mode'] = trading_mode
             
             st.markdown("---")
             
@@ -476,13 +477,14 @@ with st.sidebar:
         
         # TRADING MODE SECTION
         st.markdown("### 🎯 Mode")
-        trading_mode = st.selectbox(
+        st.session_state['trading_mode'] = st.selectbox(
             "Strategy",
             ["Conservative", "Aggressive", "Ultra Aggressive"],
-            index=1,
+            index=["Conservative", "Aggressive", "Ultra Aggressive"].index(
+                st.session_state['trading_mode']
+            ),
             label_visibility="collapsed"
         )
-        st.session_state['trading_mode'] = trading_mode
         
         st.markdown("---")
         
@@ -579,7 +581,7 @@ ensemble_result = brain.get_ensemble_analysis(data, levels)
 signal_value = ensemble_result['signal']
 
 # Apply position size boost for Ultra Aggressive mode
-if trading_mode == "Ultra Aggressive" and signal_value == 1:
+if st.session_state['trading_mode'] == "Ultra Aggressive" and signal_value == 1:
     if levels:
         levels['position_size'] = levels.get('position_size', 0) * 1.5
         levels['risk_amount'] = levels.get('risk_amount', 0) * 1.5
