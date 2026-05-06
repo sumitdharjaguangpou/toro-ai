@@ -1,9 +1,10 @@
-# chart.py - TradingView Lightweight Charts (PRO VERSION)
+# chart.py - TradingView Lightweight Charts (FINAL FIXED VERSION)
 
 import streamlit as st
 import streamlit.components.v1 as components
 import json
 import yfinance as yf
+import pandas as pd
 
 
 def render_chart(symbol, levels=None, buy_signals=None, sell_signals=None):
@@ -32,9 +33,12 @@ def render_chart(symbol, levels=None, buy_signals=None, sell_signals=None):
     # =========================
     df = df.reset_index()
 
+    # Handle Date vs Datetime automatically
+    date_col = "Date" if "Date" in df.columns else "Datetime"
+
     candles = [
         {
-            "time": row["Date"].strftime("%Y-%m-%d"),
+            "time": row[date_col].strftime("%Y-%m-%d"),
             "open": float(row["Open"]),
             "high": float(row["High"]),
             "low": float(row["Low"]),
@@ -45,7 +49,7 @@ def render_chart(symbol, levels=None, buy_signals=None, sell_signals=None):
 
     volumes = [
         {
-            "time": row["Date"].strftime("%Y-%m-%d"),
+            "time": row[date_col].strftime("%Y-%m-%d"),
             "value": float(row["Volume"]),
             "color": "#00ff88" if row["Close"] >= row["Open"] else "#ff1744",
         }
@@ -67,8 +71,9 @@ def render_chart(symbol, levels=None, buy_signals=None, sell_signals=None):
 
     # BUY SIGNALS
     if buy_signals is not None and not buy_signals.empty:
-        for _, row in buy_signals.iterrows():
-            date = str(row["Date"])[:10]  # or row["Date"].strftime("%Y-%m-%d")
+        for idx, _ in buy_signals.iterrows():
+            date = pd.to_datetime(idx).strftime("%Y-%m-%d")
+
             markers.append({
                 "time": date,
                 "position": "belowBar",
@@ -79,8 +84,9 @@ def render_chart(symbol, levels=None, buy_signals=None, sell_signals=None):
 
     # SELL SIGNALS
     if sell_signals is not None and not sell_signals.empty:
-        for _, row in sell_signals.iterrows():
-            date = str(row["Date"])[:10]
+        for idx, _ in sell_signals.iterrows():
+            date = pd.to_datetime(idx).strftime("%Y-%m-%d")
+
             markers.append({
                 "time": date,
                 "position": "aboveBar",
@@ -88,6 +94,7 @@ def render_chart(symbol, levels=None, buy_signals=None, sell_signals=None):
                 "shape": "arrowDown",
                 "text": "SELL"
             })
+
     # =========================
     # HTML + JS CHART
     # =========================
@@ -183,15 +190,15 @@ def render_chart(symbol, levels=None, buy_signals=None, sell_signals=None):
             volumeSeries.setData({json.dumps(volumes)});
 
             // =========================
-            // MARKERS (BUY/SELL)
+            // MARKERS
             // =========================
             candleSeries.setMarkers({json.dumps(markers)});
     """
 
     # =========================
-    # PRICE LINES (CORRECTED)
+    # PRICE LINES
     # =========================
-    if support:
+    if support is not None:
         chart_html += f"""
         candleSeries.createPriceLine({{
             price: {support},
@@ -202,7 +209,7 @@ def render_chart(symbol, levels=None, buy_signals=None, sell_signals=None):
         }});
         """
 
-    if resistance:
+    if resistance is not None:
         chart_html += f"""
         candleSeries.createPriceLine({{
             price: {resistance},
@@ -213,7 +220,7 @@ def render_chart(symbol, levels=None, buy_signals=None, sell_signals=None):
         }});
         """
 
-    if entry:
+    if entry is not None:
         chart_html += f"""
         candleSeries.createPriceLine({{
             price: {entry},
@@ -224,7 +231,7 @@ def render_chart(symbol, levels=None, buy_signals=None, sell_signals=None):
         }});
         """
 
-    if target:
+    if target is not None:
         chart_html += f"""
         candleSeries.createPriceLine({{
             price: {target},
@@ -239,17 +246,15 @@ def render_chart(symbol, levels=None, buy_signals=None, sell_signals=None):
     # FINAL SCRIPT
     # =========================
     chart_html += """
-            // Resize fix
             const resizeObserver = new ResizeObserver(() => {
                 chart.applyOptions({ width: container.clientWidth });
             });
 
             resizeObserver.observe(container);
-
             chart.timeScale().fitContent();
         </script>
     </body>
     </html>
     """
 
-    components.html(chart_html, height=500,)
+    components.html(chart_html, height=500)
