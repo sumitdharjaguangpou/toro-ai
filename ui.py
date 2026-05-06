@@ -7,16 +7,6 @@ from watchlist import add_to_watchlist
 from live_data import live_price_fragment
 
 
-# ==========================================
-# PAGE CONFIGURATION
-# ==========================================
-st.set_page_config(
-    page_title="TORO AI - Quantum Stock Intelligence",
-    page_icon="🐂",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
-
 # ══════════════════════════
 # SESSION STATE
 # ══════════════════════════
@@ -44,10 +34,9 @@ def get_realtime_price(stock):
                 'timestamp': time.time()
             }
     except Exception as e:
-     print(e)
-     return None
+        print(e)
+        return None
 
-# DELTA
 def get_delta_update(stock):
     """Only update price if 3+ seconds passed"""
     current_time = time.time()
@@ -409,6 +398,7 @@ def render_header():
     </div>
     """, unsafe_allow_html=True)
 
+
 # =========================
 # RENDER SEARCH
 # =========================
@@ -522,56 +512,6 @@ def render_search_section(stocks_dict):
                     border-color: #ff00ff !important;
                 }
 
-                /* AI Screener Button - Special Futuristic */
-                div.stButton > button[key="ai_screener_btn"] {
-                    background: linear-gradient(135deg, #000428, #004e92) !important;
-                    background-size: 200% 200% !important;
-                    border: 2px solid rgba(0, 255, 255, 0.8) !important;
-                    color: #00ffff !important;
-                    font-size: 14px !important;
-                    font-weight: 800 !important;
-                    text-transform: uppercase !important;
-                    letter-spacing: 2px !important;
-                    animation: gradientShift 3s ease infinite, pulse 2s ease-in-out infinite !important;
-                    margin-top: 20px !important;
-                    position: relative !important;
-                    overflow: hidden !important;
-                }
-
-                @keyframes gradientShift {
-                    0%, 100% { background-position: 0% 50%; }
-                    50% { background-position: 100% 50%; }
-                }
-
-                @keyframes pulse {
-                    0%, 100% {
-                        box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
-                        border-color: rgba(0, 255, 255, 0.8);
-                    }
-                    50% {
-                        box-shadow: 0 0 40px rgba(0, 255, 255, 0.6), 0 0 20px rgba(255, 0, 255, 0.3);
-                        border-color: #ff00ff;
-                    }
-                }
-
-                div.stButton > button[key="ai_screener_btn"]::before {
-                    content: '';
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    width: 0;
-                    height: 0;
-                    border-radius: 50%;
-                    background: radial-gradient(circle, rgba(0,255,255,0.3), rgba(255,0,255,0));
-                    transform: translate(-50%, -50%);
-                    transition: width 0.6s, height 0.6s;
-                }
-
-                div.stButton > button[key="ai_screener_btn"]:hover::before {
-                    width: 300px;
-                    height: 300px;
-                }
-
                 /* Toast notifications styling */
                 .stToast {
                     background: linear-gradient(135deg, #1a1a2e, #16213e) !important;
@@ -654,12 +594,12 @@ def render_search_section(stocks_dict):
                 )
 
                 # Display suggestion buttons
-                for i, match in enumerate(matches[:3]):  # Show top 3 suggestions
+                for i, match in enumerate(matches[:3]):
                     col1, col2 = st.columns([8, 2])
                     with col1:
                         if st.button(
                             f"📊 {match}",
-                            key=f"suggestion_{i}",
+                            key=f"suggestion_{i}_{match}",
                             use_container_width=True,
                             help=f"Select {match}"
                         ):
@@ -671,7 +611,7 @@ def render_search_section(stocks_dict):
                     with col2:
                         if st.button(
                             "⭐",
-                            key=f"watchlist_{i}",
+                            key=f"watchlist_{i}_{match}",
                             help=f"Add {match} to watchlist"
                         ):
                             if add_to_watchlist(stocks_dict[match], match):
@@ -680,7 +620,6 @@ def render_search_section(stocks_dict):
                                 st.toast(f"⚠️ {match} already in watchlist!", icon="📌")
 
                 if matches and not stock:
-                    # Auto-select the first match
                     stock = stocks_dict[matches[0]]
                     
                 if stock:
@@ -724,211 +663,234 @@ def render_search_section(stocks_dict):
 
         st.markdown("<div class='custom-divider'></div>", unsafe_allow_html=True)
 
-        # =========================
-        # AI SMART SCREENER BUTTON
-        # =========================
-        screener_clicked = st.button(
-            "🤖 AI QUANTUM SCREENER ⚡",
-            key="ai_screener_btn",
-            use_container_width=True,
-            help="Activate Advanced AI-Powered Stock Screening"
-        )
-
     with right_col:
-        # You can add additional content here
         pass
 
-    return search, stock, screener_clicked
+    return search, stock
 
 
 
 
-
-
-# RENDER METRICS
+    
+    
+   #=======================
+    # RENDER METRICS
+    #==========================
 def render_metrics(data, buy, sell, stock):
-    st.markdown("## 📊 Market Overview")
+    """Render metrics with responsive layout for mobile/desktop"""
 
+    # =========================
+    # SAFETY CHECK (IMPORTANT)
+    # =========================
+    if data is None or len(data) < 2:
+        st.warning("⚠️ Not enough data to display metrics")
+        return
+
+    st.markdown(
+        "<div style='font-size: 13px; font-weight: 600; color: #8892b0; margin-bottom: 10px; letter-spacing: 1px;'>📊 MARKET OVERVIEW</div>",
+        unsafe_allow_html=True
+    )
+
+    # =========================
+    # CSS (Keep Once)
+    # =========================
     st.markdown("""
-        <style>
-            div[data-testid="column"] {
-                padding: 0 4px !important;
-            }
-            .stMarkdown {
-                margin-bottom: 0 !important;
-            }
-        </style>
+    <style>
+    .premium-metric-box {
+        background: linear-gradient(135deg, rgba(10,20,40,0.95), rgba(5,10,20,0.98));
+        border-radius: 10px;
+        border: 1px solid rgba(0,255,255,0.15);
+        padding: 10px 8px;
+        margin: 4px 0;
+        text-align: center;
+        transition: all 0.2s ease;
+    }
+    .premium-metric-box:hover {
+        border-color: rgba(0,255,255,0.4);
+        box-shadow: 0 2px 12px rgba(0,255,255,0.1);
+    }
+    .premium-metric-label {
+        font-size: 9px;
+        color: #8892b0;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+    }
+    .premium-metric-value {
+        font-size: 20px;
+        font-weight: 700;
+        color: #00ffff;
+        line-height: 1.2;
+        margin-bottom: 4px;
+    }
+    .premium-metric-change {
+        font-size: 11px;
+        font-weight: 500;
+        margin-bottom: 4px;
+    }
+    .premium-metric-status {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 9px;
+        font-weight: 600;
+        margin-top: 3px;
+    }
+    </style>
     """, unsafe_allow_html=True)
 
-    col1, col2, col3, col4 = st.columns(4)
+    # =========================
+    # CALCULATIONS
+    # =========================
+    current_price = data['Close'].iloc[-1]
+    prev_price = data['Close'].iloc[-2]
 
-    # ── BOX 1: LIVE PRICE ──
-    with col1:
-        live_price_fragment(stock)
+    change = current_price - prev_price
+    change_pct = (change / prev_price * 100) if prev_price else 0
 
-    # ── BOX 2: RSI ──
-    with col2:
-        rsi = data['RSI'].iloc[-1]
-        if rsi > 70:
-            status, icon = "Overbought", "🔴"
-            bg, clr, bd = "var(--sell-bg)", "var(--sell-color)", "var(--sell-border)"
-        elif rsi < 30:
-            status, icon = "Oversold", "🟢"
-            bg, clr, bd = "var(--buy-bg)", "var(--buy-color)", "var(--buy-border)"
+    change_color = "#00ff88" if change >= 0 else "#ff1744"
+    change_sign = "▲" if change >= 0 else "▼"
+
+    # RSI
+    rsi = data['RSI'].iloc[-1]
+    if rsi > 70:
+        status = "Overbought"
+        icon = "🔴"
+        status_color = "#ff1744"
+        bg_color = "rgba(255,23,68,0.15)"
+    elif rsi < 30:
+        status = "Oversold"
+        icon = "🟢"
+        status_color = "#00ff88"
+        bg_color = "rgba(0,255,136,0.15)"
+    else:
+        status = "Neutral"
+        icon = "🟡"
+        status_color = "#ffd700"
+        bg_color = "rgba(255,215,0,0.15)"
+
+    # Volume
+    current_volume = data['Volume'].iloc[-1]
+    avg_volume = data['Volume'].rolling(20).mean().iloc[-1]
+
+    if current_volume >= 1e7:
+        vol_display = f"{current_volume/1e7:.2f}Cr"
+    elif current_volume >= 1e5:
+        vol_display = f"{current_volume/1e5:.2f}L"
+    elif current_volume >= 1e3:
+        vol_display = f"{current_volume/1e3:.2f}K"
+    else:
+        vol_display = f"{current_volume:.0f}"
+
+    if pd.notna(avg_volume):
+        vol_ratio = (current_volume / avg_volume - 1) * 100
+        if vol_ratio > 20:
+            vol_status = "🔥 High"
+            vol_status_color = "#00ff88"
+            vol_bg = "rgba(0,255,136,0.15)"
+        elif vol_ratio < -20:
+            vol_status = "❄️ Low"
+            vol_status_color = "#ffa500"
+            vol_bg = "rgba(255,165,0,0.15)"
         else:
-            status, icon = "Neutral", "🟡"
-            bg, clr, bd = "var(--neutral-bg)", "var(--neutral-color)", "var(--neutral-border)"
+            vol_status = "📊 Avg"
+            vol_status_color = "#ffd700"
+            vol_bg = "rgba(255,215,0,0.15)"
+    else:
+        vol_status = "📊 N/A"
+        vol_status_color = "#8892b0"
+        vol_bg = "rgba(136,146,176,0.15)"
 
-        st.markdown(
-            f"""
-            <div style="
-                background: var(--bg-primary, #ffffff);
-                border: 1px solid var(--border-color, #e2e8f0);
-                border-radius: 8px;
-                padding: 8px 4px;
-                text-align: center;
-            ">
-                <div style="font-size: 10px; color: var(--text-secondary, #64748b); margin-bottom: 2px; font-weight: 600;">📈 RSI</div>
-                <div style="font-size: 18px; font-weight: 700; color: var(--text-primary, #0f172a); line-height: 1.1; margin-bottom: 4px;">
-                    {rsi:.1f}
-                </div>
-                <div style="
-                    display: inline-block;
-                    padding: 2px 8px;
-                    border-radius: 10px;
-                    font-weight: 600;
-                    background-color: {bg};
-                    color: {clr};
-                    font-size: 10px;
-                    border: 1px solid {bd};
-                ">
-                    {icon} {status}
-                </div>
+    # Trend
+    ma50 = data['Close'].rolling(50).mean().iloc[-1]
+    if pd.notna(ma50) and current_price > ma50:
+        trend = "UPTREND"
+        trend_icon = "📈"
+        trend_color = "#00ff88"
+        trend_bg = "rgba(0,255,136,0.15)"
+    else:
+        trend = "DOWNTREND"
+        trend_icon = "📉"
+        trend_color = "#ff1744"
+        trend_bg = "rgba(255,23,68,0.15)"
+
+    # Signal
+    signal = data['Signal'].iloc[-1] if 'Signal' in data.columns else 0
+    if signal == 1:
+        sig_text = "BUY"
+        sig_icon = "🟢"
+        sig_color = "#00ff88"
+        sig_bg = "rgba(0,255,136,0.15)"
+    elif signal == -1:
+        sig_text = "SELL"
+        sig_icon = "🔴"
+        sig_color = "#ff1744"
+        sig_bg = "rgba(255,23,68,0.15)"
+    else:
+        sig_text = "HOLD"
+        sig_icon = "🟡"
+        sig_color = "#ffd700"
+        sig_bg = "rgba(255,215,0,0.15)"
+
+    # =========================
+    # RESPONSIVE UI
+    # =========================
+    if st.session_state.get('is_mobile', False):
+        cols = [st.container() for _ in range(4)]
+    else:
+        cols = st.columns(4)
+
+    # =========================
+    # METRIC BOXES
+    # =========================
+    with cols[0]:
+        st.markdown(f"""
+        <div class="premium-metric-box">
+            <div class="premium-metric-label">💰 LIVE PRICE</div>
+            <div class="premium-metric-value">₹{current_price:.2f}</div>
+            <div class="premium-metric-change" style="color: {change_color};">
+                {change_sign} ₹{abs(change):.2f} ({change_pct:+.2f}%)
             </div>
-            """,
-            unsafe_allow_html=True
-        )
+        </div>
+        """, unsafe_allow_html=True)
 
-    # ── BOX 3: VOLUME ──
-    with col3:
-        current_volume = data['Volume'].iloc[-1]
-        avg_volume = data['Volume'].rolling(20).mean().iloc[-1]
-
-        if current_volume >= 1e7:
-            vol_display = f"{current_volume/1e7:.2f}Cr"
-        elif current_volume >= 1e5:
-            vol_display = f"{current_volume/1e5:.2f}L"
-        elif current_volume >= 1e3:
-            vol_display = f"{current_volume/1e3:.2f}K"
-        else:
-            vol_display = f"{current_volume:.0f}"
-
-        if pd.notna(avg_volume):
-            vol_ratio = (current_volume / avg_volume - 1) * 100
-            if vol_ratio > 20:
-                vol_status, vol_icon = "High", "🔥"
-                bg, clr, bd = "var(--buy-bg)", "var(--buy-color)", "var(--buy-border)"
-            elif vol_ratio < -20:
-                vol_status, vol_icon = "Low", "❄️"
-                bg, clr, bd = "var(--sell-bg)", "var(--sell-color)", "var(--sell-border)"
-            else:
-                vol_status, vol_icon = "Avg", "📊"
-                bg, clr, bd = "var(--neutral-bg)", "var(--neutral-color)", "var(--neutral-border)"
-        else:
-            vol_status, vol_icon = "N/A", "📊"
-            bg, clr, bd = "var(--bg-tertiary, #f1f5f9)", "var(--text-muted, #94a3b8)", "var(--border-color, #e2e8f0)"
-
-        st.markdown(
-            f"""
-            <div style="
-                background: var(--bg-primary, #ffffff);
-                border: 1px solid var(--border-color, #e2e8f0);
-                border-radius: 8px;
-                padding: 8px 4px;
-                text-align: center;
-            ">
-                <div style="font-size: 10px; color: var(--text-secondary, #64748b); margin-bottom: 2px; font-weight: 600;">📊 VOL</div>
-                <div style="font-size: 18px; font-weight: 700; color: var(--text-primary, #0f172a); line-height: 1.1; margin-bottom: 4px;">
-                    {vol_display}
-                </div>
-                <div style="
-                    display: inline-block;
-                    padding: 2px 8px;
-                    border-radius: 10px;
-                    font-weight: 600;
-                    background-color: {bg};
-                    color: {clr};
-                    font-size: 10px;
-                    border: 1px solid {bd};
-                ">
-                    {vol_icon} {vol_status}
-                </div>
+    with cols[1]:
+        st.markdown(f"""
+        <div class="premium-metric-box">
+            <div class="premium-metric-label">📈 RSI</div>
+            <div class="premium-metric-value" style="color: {status_color};">{rsi:.1f}</div>
+            <div class="premium-metric-status" style="background: {bg_color}; color: {status_color};">
+                {icon} {status}
             </div>
-            """,
-            unsafe_allow_html=True
-        )
+        </div>
+        """, unsafe_allow_html=True)
 
-    # ── BOX 4: SIGNAL ──
-    with col4:
-        ma50 = data['Close'].rolling(50).mean().iloc[-1]
-        current_price = data['Close'].iloc[-1]
-
-        if pd.notna(ma50) and current_price > ma50:
-            trend, t_icon = "UPTREND", "📈"
-            t_bg, t_clr, t_bd = "var(--buy-bg)", "var(--buy-color)", "var(--buy-border)"
-        else:
-            trend, t_icon = "DOWNTREND", "📉"
-            t_bg, t_clr, t_bd = "var(--sell-bg)", "var(--sell-color)", "var(--sell-border)"
-
-        signal = data['Signal'].iloc[-1] if 'Signal' in data.columns else 0
-        if signal == 1:
-            sig_text, s_icon = "BUY", "🟢"
-            s_bg, s_clr, s_bd = "var(--buy-bg)", "var(--buy-color)", "var(--buy-border)"
-        elif signal == -1:
-            sig_text, s_icon = "SELL", "🔴"
-            s_bg, s_clr, s_bd = "var(--sell-bg)", "var(--sell-color)", "var(--sell-border)"
-        else:
-            sig_text, s_icon = "HOLD", "🟡"
-            s_bg, s_clr, s_bd = "var(--neutral-bg)", "var(--neutral-color)", "var(--neutral-border)"
-
-        st.markdown(
-            f"""
-            <div style="
-                background: var(--bg-primary, #ffffff);
-                border: 1px solid var(--border-color, #e2e8f0);
-                border-radius: 8px;
-                padding: 8px 4px;
-                text-align: center;
-            ">
-                <div style="font-size: 10px; color: var(--text-secondary, #64748b); margin-bottom: 2px; font-weight: 600;">📊 SIGNAL</div>
-                <div style="margin-bottom: 4px;">
-                    <span style="
-                        display: inline-block;
-                        padding: 2px 8px;
-                        border-radius: 10px;
-                        font-weight: 700;
-                        background-color: {t_bg};
-                        color: {t_clr};
-                        font-size: 10px;
-                        border: 1px solid {t_bd};
-                    ">{t_icon} {trend}</span>
-                </div>
-                <div>
-                    <span style="
-                        display: inline-block;
-                        padding: 2px 8px;
-                        border-radius: 10px;
-                        font-weight: 700;
-                        background-color: {s_bg};
-                        color: {s_clr};
-                        font-size: 10px;
-                        border: 1px solid {s_bd};
-                    ">{s_icon} {sig_text}</span>
-                </div>
+    with cols[2]:
+        st.markdown(f"""
+        <div class="premium-metric-box">
+            <div class="premium-metric-label">📊 VOLUME</div>
+            <div class="premium-metric-value" style="font-size:16px;">{vol_display}</div>
+            <div class="premium-metric-status" style="background: {vol_bg}; color: {vol_status_color};">
+                {vol_status}
             </div>
-            """,
-            unsafe_allow_html=True
-        )
+        </div>
+        """, unsafe_allow_html=True)
+
+    with cols[3]:
+        st.markdown(f"""
+        <div class="premium-metric-box">
+            <div class="premium-metric-label">📊 SIGNAL</div>
+            <div style="margin-bottom:5px;">
+                <span class="premium-metric-status" style="background:{trend_bg}; color:{trend_color};">
+                    {trend_icon} {trend}
+                </span>
+            </div>
+            <div>
+                <span class="premium-metric-status" style="background:{sig_bg}; color:{sig_color};">
+                    {sig_icon} {sig_text}
+                </span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
 #========================
 # RENDER NEWS
@@ -937,7 +899,6 @@ def render_news(news):
     st.subheader("📰 Market News")
 
     for item in news:
-        # Sentiment icon
         sentiment_icon = ""
         if item.get('sentiment') == 'positive':
             sentiment_icon = "🟢 "
@@ -967,6 +928,7 @@ def render_news(news):
             """,
             unsafe_allow_html=True
         )
+
 
 # RENDER CONTACT
 def render_contact():
