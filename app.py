@@ -544,7 +544,6 @@ period = TIMEFRAMES[DEFAULT_TIMEFRAME]["period"]
 with st.spinner("📡 Fetching market data and analyzing..."):
     data = fetch_stock_data(stock, period, interval)
     
-st.write(f"DEBUG: Data length = {len(data)} days")#======
 
 if data.empty:
     st.error(f"⚠️ No data available for {stock}")
