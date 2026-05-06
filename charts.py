@@ -1,258 +1,255 @@
-import matplotlib.pyplot as plt
-import plotly
+# chart.py - TradingView Lightweight Charts (PRO VERSION)
+
 import streamlit as st
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots 
-import pandas as pd
+import streamlit.components.v1 as components
+import json
+import yfinance as yf
 
 
-#PRICE CHART
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import streamlit as st
-import pandas as pd
-
-def plot_price_chart(data, buy, sell, timeframe="Daily"):
+def render_chart(symbol, levels=None, buy_signals=None, sell_signals=None):
     """
-    data : DataFrame with columns [Open, High, Low, Close, Volume] and DateTime index
-    buy  : DataFrame of buy signals (same index as data)
-    sell : DataFrame of sell signals (same index as data)
-    timeframe : "Daily", "Weekly", "Monthly", "5 Min", "15 Min", "1 Hour"
+    Render professional TradingView-style chart
     """
 
-    # ==========================================
-    # ⏱️ ULTRA-COMPACT TIMEFRAME + CHART TYPE
-    # ==========================================
-    col1, col2, col3, col4 = st.columns([0.5, 1.5, 0.5, 1.5])
-    
-    with col1:
-        st.markdown('<p style="font-size:11px; margin:0; padding-top:8px;">⏱️</p>', unsafe_allow_html=True)
-    
-    with col2:
-        timeframe = st.selectbox(
-            "Timeframe",
-            ["Daily", "Weekly", "Monthly", "5 Min", "15 Min", "1 Hour"],
-            index=["Daily", "Weekly", "Monthly", "5 Min", "15 Min", "1 Hour"].index(timeframe) if timeframe in ["Daily", "Weekly", "Monthly", "5 Min", "15 Min", "1 Hour"] else 0,
-            label_visibility="collapsed",
-            key="timeframe_chart"
-        )
-    
-    with col3:
-        st.markdown('<p style="font-size:11px; margin:0; padding-top:8px;">📊</p>', unsafe_allow_html=True)
-    
-    with col4:
-        chart_style = st.radio(
-            "Chart Type",
-            ["📉", "📈"],
-            horizontal=True,
-            label_visibility="collapsed",
-            index=0,
-            key="chart_style_radio"
-        )
-    
-    chart_type = "📉 Candlestick" if chart_style == "📉" else "📈 Line"
+    # =========================
+    # FETCH DATA
+    # =========================
+    try:
+        with st.spinner("📊 Loading chart..."):
+            ticker = yf.Ticker(symbol)
+            df = ticker.history(period="10y", interval="1d")
 
-    # ── Resample logic ──
-    resample_map = {
-        "Weekly": "W",
-        "Monthly": "ME",
-        "5 Min": "5min",
-        "15 Min": "15min",
-        "1 Hour": "1h",
-    }
+        if df.empty:
+            st.warning(f"No data available for {symbol}")
+            return
 
-    if timeframe in resample_map:
-        rule = resample_map[timeframe]
-        data_resampled = data.resample(rule).agg({
-            'Open': 'first',
-            'High': 'max',
-            'Low': 'min',
-            'Close': 'last',
-            'Volume': 'sum'
-        }).dropna()
+    except Exception as e:
+        st.error(f"Error fetching data: {e}")
+        return
 
-        if not buy.empty:
-            buy_resampled = buy.resample(rule).agg({'Close': 'last'}).dropna()
-            buy_resampled = buy_resampled[buy_resampled.index.isin(buy.index)]
-        else:
-            buy_resampled = pd.DataFrame(columns=['Close'])
+    # =========================
+    # PREPARE DATA
+    # =========================
+    df = df.reset_index()
 
-        if not sell.empty:
-            sell_resampled = sell.resample(rule).agg({'Close': 'last'}).dropna()
-            sell_resampled = sell_resampled[sell_resampled.index.isin(sell.index)]
-        else:
-            sell_resampled = pd.DataFrame(columns=['Close'])
+    candles = [
+        {
+            "time": row["Date"].strftime("%Y-%m-%d"),
+            "open": float(row["Open"]),
+            "high": float(row["High"]),
+            "low": float(row["Low"]),
+            "close": float(row["Close"]),
+        }
+        for _, row in df.iterrows()
+    ]
 
-        data = data_resampled
-        buy = buy_resampled
-        sell = sell_resampled
+    volumes = [
+        {
+            "time": row["Date"].strftime("%Y-%m-%d"),
+            "value": float(row["Volume"]),
+            "color": "#00ff88" if row["Close"] >= row["Open"] else "#ff1744",
+        }
+        for _, row in df.iterrows()
+    ]
 
-    # Moving averages
-    ma1, ma2 = 20, 50
-    ma1_series = data['Close'].rolling(ma1).mean()
-    ma2_series = data['Close'].rolling(ma2).mean()
+    # =========================
+    # LEVELS
+    # =========================
+    support = levels.get("support") if levels else None
+    resistance = levels.get("resistance") if levels else None
+    entry = levels.get("entry") if levels else None
+    target = levels.get("target") if levels else None
 
-    # Subplot
-    fig = make_subplots(
-        rows=2, cols=1,
-        shared_xaxes=True,
-        row_heights=[0.7, 0.3],
-        vertical_spacing=0.03,
-    )
+    # =========================
+    # MARKERS (BUY/SELL)
+    # =========================
+    markers = []
 
-    # ── Row 1: Price ──
-    if chart_type == "📉 Candlestick":
-        fig.add_trace(go.Candlestick(
-            x=data.index,
-            open=data['Open'],
-            high=data['High'],
-            low=data['Low'],
-            close=data['Close'],
-            name="OHLC",
-            increasing_line_color='#26a69a',
-            decreasing_line_color='#ef5350',
-            showlegend=True
-        ), row=1, col=1)
-    else:
-        fig.add_trace(go.Scatter(
-            x=data.index, y=data['Close'],
-            mode='lines', name='Close',
-            line=dict(color='#64b5f6', width=1.8)
-        ), row=1, col=1)
+    # BUY SIGNALS
+    if buy_signals is not None and not buy_signals.empty:
+        for _, row in buy_signals.iterrows():
+            date = str(row["Date"])[:10]  # or row["Date"].strftime("%Y-%m-%d")
+            markers.append({
+                "time": date,
+                "position": "belowBar",
+                "color": "#00ff88",
+                "shape": "arrowUp",
+                "text": "BUY"
+            })
 
-    # MAs
-    fig.add_trace(go.Scatter(
-        x=data.index, y=ma1_series,
-        mode='lines', name=f'MA{ma1}',
-        line=dict(color='#ffb74d', width=1.2, dash='dot')
-    ), row=1, col=1)
+    # SELL SIGNALS
+    if sell_signals is not None and not sell_signals.empty:
+        for _, row in sell_signals.iterrows():
+            date = str(row["Date"])[:10]
+            markers.append({
+                "time": date,
+                "position": "aboveBar",
+                "color": "#ff1744",
+                "shape": "arrowDown",
+                "text": "SELL"
+            })
+    # =========================
+    # HTML + JS CHART
+    # =========================
+    chart_html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            body {{
+                margin: 0;
+                padding: 0;
+                background: #0a0e27;
+            }}
+            #chart-container {{
+                width: 100%;
+                height: 550px;
+            }}
+        </style>
+    </head>
 
-    fig.add_trace(go.Scatter(
-        x=data.index, y=ma2_series,
-        mode='lines', name=f'MA{ma2}',
-        line=dict(color='#81c784', width=1.2, dash='dot')
-    ), row=1, col=1)
+    <body>
+        <div id="chart-container"></div>
 
-    # Buy / Sell signals
-    if not buy.empty:
-        fig.add_trace(go.Scatter(
-            x=buy.index, y=buy['Close'],
-            mode='markers', name='Buy',
-            marker=dict(symbol='triangle-up', color='#00e676', size=12,
-                        line=dict(color='black', width=1)),
-            hovertemplate='BUY @ ₹%{y:.2f}<extra></extra>'
-        ), row=1, col=1)
+        <script src="https://unpkg.com/lightweight-charts@3.8.0/dist/lightweight-charts.standalone.production.js"></script>
 
-    if not sell.empty:
-        fig.add_trace(go.Scatter(
-            x=sell.index, y=sell['Close'],
-            mode='markers', name='Sell',
-            marker=dict(symbol='triangle-down', color='#ff1744', size=12,
-                        line=dict(color='black', width=1)),
-            hovertemplate='SELL @ ₹%{y:.2f}<extra></extra>'
-        ), row=1, col=1)
+        <script>
+            const container = document.getElementById('chart-container');
 
-    # Volume bars
-    colors = ['#26a69a' if data['Close'].iloc[i] > data['Open'].iloc[i] else '#ef5350'
-              for i in range(len(data))]
-    fig.add_trace(go.Bar(
-        x=data.index, y=data['Volume'],
-        name='Volume',
-        marker=dict(color=colors, opacity=0.6),
-        showlegend=False
-    ), row=2, col=1)
+            const chart = LightweightCharts.createChart(container, {{
+                width: container.clientWidth || 900,
+                height: 500,
 
-    # ── Layout (NO range selector buttons) ──
-    fig.update_layout(
-        template="plotly_dark",
-        hovermode="x unified",
-        hoverlabel=dict(bgcolor="#1e1e1e", font_color="#e0e0e0", font_size=12),
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.01,
-            xanchor="right",
-            x=1,
-            font=dict(size=10),
-            bgcolor="rgba(0,0,0,0.3)"
-        ),
-        margin=dict(l=10, r=10, t=30, b=10),
-        paper_bgcolor="#1e1e1e",
-        plot_bgcolor="#1e1e1e",
-        dragmode="pan",
-        xaxis=dict(
-            rangeslider=dict(visible=False),
-            showgrid=True,
-            gridcolor='rgba(255,255,255,0.08)',
-            zeroline=False
-        ),
-        yaxis=dict(
-            title="Price (₹)",
-            showgrid=True,
-            gridcolor='rgba(255,255,255,0.08)',
-            zeroline=False,
-            side="right"
-        ),
-        yaxis2=dict(
-            title="Volume",
-            showgrid=False,
-            zeroline=False
-        ),
-        xaxis2=dict(
-            showgrid=True,
-            gridcolor='rgba(255,255,255,0.08)',
-            zeroline=False
-        )
-    )
+                layout: {{
+                    background: {{ color: '#0a0e27' }},
+                    textColor: '#8892b0',
+                }},
 
-    # Smart dates
-    fig.update_xaxes(
-        tickformatstops=[
-            dict(dtickrange=[None, "M1"], value="%d %b"),
-            dict(dtickrange=["M1", "M6"], value="%b '%y"),
-            dict(dtickrange=["M6", None], value="%b %Y"),
-        ],
-        ticklabelmode="period",
-        tickfont=dict(color="#b0b0b0", size=10),
-        row=1, col=1
-    )
-    fig.update_xaxes(
-        tickformatstops=[
-            dict(dtickrange=[None, "M1"], value="%d %b"),
-            dict(dtickrange=["M1", "M6"], value="%b '%y"),
-            dict(dtickrange=["M6", None], value="%b %Y"),
-        ],
-        ticklabelmode="period",
-        tickfont=dict(color="#b0b0b0", size=9),
-        row=2, col=1
-    )
+                grid: {{
+                    vertLines: {{ color: 'rgba(0,255,255,0.08)' }},
+                    horzLines: {{ color: 'rgba(0,255,255,0.08)' }},
+                }},
 
-    # Spike lines for crosshair
-    fig.update_xaxes(spikemode="across", spikethickness=1, spikedash="dot",
-                     spikecolor="rgba(255,255,255,0.2)", row=1, col=1)
+                crosshair: {{
+                    mode: LightweightCharts.CrosshairMode.Normal,
+                }},
 
-    # Display
-    st.plotly_chart(fig, use_container_width=True)
+                rightPriceScale: {{
+                    borderColor: 'rgba(0,255,255,0.2)',
+                }},
 
+                timeScale: {{
+                    timeVisible: true,
+                    secondsVisible: false,
+                    borderColor: 'rgba(0,255,255,0.2)',
+                }},
 
+                handleScroll: {{
+                    mouseWheel: true,
+                    pressedMouseMove: true,
+                }},
 
+                handleScale: {{
+                    axisPressedMouseMove: true,
+                    mouseWheel: true,
+                    pinch: true,
+                }},
+            }});
 
-#RSI CHART
-def plot_rsi_chart(data, buy, sell):
-    fig, ax = plt.subplots(figsize=(14,1))
+            // =========================
+            // CANDLE SERIES
+            // =========================
+            const candleSeries = chart.addCandlestickSeries({{
+                upColor: '#00ff88',
+                downColor: '#ff1744',
+                borderUpColor: '#00ff88',
+                borderDownColor: '#ff1744',
+                wickUpColor: '#00ff88',
+                wickDownColor: '#ff1744',
+            }});
 
-    ax.plot(data['RSI'])
-    ax.scatter(buy.index, data.loc[buy.index, "RSI"])
-    ax.scatter(sell.index, data.loc[sell.index, "RSI"])
+            candleSeries.setData({json.dumps(candles)});
 
-    st.pyplot(fig)
+            // =========================
+            // VOLUME SERIES
+            // =========================
+            const volumeSeries = chart.addHistogramSeries({{
+                priceFormat: {{ type: 'volume' }},
+                priceScaleId: '',
+                scaleMargins: {{ top: 0.8, bottom: 0 }},
+            }});
 
+            volumeSeries.setData({json.dumps(volumes)});
 
-#MACD CHART
-def plot_macd_chart(data):
-    fig, ax = plt.subplots(figsize=(14,1))
+            // =========================
+            // MARKERS (BUY/SELL)
+            // =========================
+            candleSeries.setMarkers({json.dumps(markers)});
+    """
 
-    ax.plot(data['MACD'])
-    ax.plot(data['MACD_Signal'])
+    # =========================
+    # PRICE LINES (CORRECTED)
+    # =========================
+    if support:
+        chart_html += f"""
+        candleSeries.createPriceLine({{
+            price: {support},
+            color: '#00ff88',
+            lineWidth: 2,
+            lineStyle: LightweightCharts.LineStyle.Dashed,
+            title: 'SUPPORT'
+        }});
+        """
 
-    st.pyplot(fig)
+    if resistance:
+        chart_html += f"""
+        candleSeries.createPriceLine({{
+            price: {resistance},
+            color: '#ff1744',
+            lineWidth: 2,
+            lineStyle: LightweightCharts.LineStyle.Dashed,
+            title: 'RESISTANCE'
+        }});
+        """
+
+    if entry:
+        chart_html += f"""
+        candleSeries.createPriceLine({{
+            price: {entry},
+            color: '#00ffff',
+            lineWidth: 2,
+            lineStyle: LightweightCharts.LineStyle.Solid,
+            title: 'ENTRY'
+        }});
+        """
+
+    if target:
+        chart_html += f"""
+        candleSeries.createPriceLine({{
+            price: {target},
+            color: '#ffd700',
+            lineWidth: 2,
+            lineStyle: LightweightCharts.LineStyle.Dotted,
+            title: 'TARGET'
+        }});
+        """
+
+    # =========================
+    # FINAL SCRIPT
+    # =========================
+    chart_html += """
+            // Resize fix
+            const resizeObserver = new ResizeObserver(() => {
+                chart.applyOptions({ width: container.clientWidth });
+            });
+
+            resizeObserver.observe(container);
+
+            chart.timeScale().fitContent();
+        </script>
+    </body>
+    </html>
+    """
+
+    components.html(chart_html, height=500,)
