@@ -108,7 +108,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-#===========================================
+# ==========================================
 # ENHANCED RESPONSIVE CSS (Mobile + Desktop)
 # ==========================================
 st.markdown("""
@@ -127,7 +127,60 @@ st.markdown("""
 }
 
 /* --------------------------------------------------- */
-/* 2. TABLET STYLES (769px to 1024px) */
+/* 2. TABLET STYLES (600px to 768px) - 2 COLUMNS */
+/* --------------------------------------------------- */
+@media (min-width: 600px) and (max-width: 768px) {
+    /* Make containers 2-column grid */
+    .stHorizontalBlock {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+    }
+    
+    /* Ensure individual columns take full width of grid cell */
+    div[data-testid="column"] {
+        width: 100% !important;
+        margin: 0 !important;
+    }
+    
+    /* Adjust text sizes for tablet */
+    .compact-value {
+        font-size: 15px !important;
+    }
+    .compact-label {
+        font-size: 11px !important;
+    }
+    .compact-sub {
+        font-size: 9px !important;
+    }
+    
+    /* Make buttons tablet-friendly */
+    button, .stButton button {
+        min-height: 44px !important;
+        font-size: 13px !important;
+    }
+    
+    /* Adjust chart height for tablet */
+    .stPlotlyChart, iframe {
+        height: 380px !important;
+    }
+    
+    /* Adjust sidebar width */
+    section[data-testid="stSidebar"] {
+        width: 300px !important;
+    }
+    
+    /* Fibonacci boxes on tablet */
+    .fib-compact {
+        padding: 5px 3px !important;
+    }
+    .fib-value {
+        font-size: 11px !important;
+    }
+}
+
+/* --------------------------------------------------- */
+/* 3. LARGE TABLET (769px to 1024px) */
 /* --------------------------------------------------- */
 @media (min-width: 769px) and (max-width: 1024px) {
     .compact-value {
@@ -142,9 +195,9 @@ st.markdown("""
 }
 
 /* --------------------------------------------------- */
-/* 3. MOBILE STYLES (max-width: 768px) */
+/* 4. SMALL PHONES (max-width: 599px) - 1 COLUMN */
 /* --------------------------------------------------- */
-@media (max-width: 768px) {
+@media (max-width: 599px) {
    
     /* ----- Text and Fonts ----- */
     .compact-value, .compact-value-success, .compact-value-danger {
@@ -259,7 +312,7 @@ st.markdown("""
 }
 
 /* --------------------------------------------------- */
-/* 4. VERY SMALL PHONES (max-width: 480px) */
+/* 5. VERY SMALL PHONES (max-width: 480px) */
 /* --------------------------------------------------- */
 @media (max-width: 480px) {
     .compact-value, .compact-value-success, .compact-value-danger {
@@ -330,16 +383,47 @@ if 'trading_mode' not in st.session_state:
 
 
 # ==========================================
-# CACHED DATA FETCHER
+# SAFE CACHED DATA FETCHER
 # ==========================================
-@st.cache_data(ttl=60)
+import time
+from yfinance.exceptions import YFRateLimitError
+
+@st.cache_data(ttl=300)
 def fetch_stock_data(stock, period, interval):
-    """Fetch and cache stock data with indicators"""
-    ticker = yf.Ticker(stock)
-    data = ticker.history(period=period, interval=interval)
-    if not data.empty:
-        data = brain.calculate_all_indicators(data)
-    return data
+    """Fetch stock data safely"""
+
+    max_retries = 3
+
+    for attempt in range(max_retries):
+
+        try:
+            ticker = yf.Ticker(stock)
+
+            data = ticker.history(
+                period=period,
+                interval=interval,
+                auto_adjust=True,
+                prepost=False
+            )
+
+            if not data.empty:
+                data = brain.calculate_all_indicators(data)
+
+            return data
+
+        except YFRateLimitError:
+
+            if attempt < max_retries - 1:
+                time.sleep(3)
+            else:
+                st.warning("⚠️ Yahoo Finance rate limit reached. Please wait a moment and try again.")
+                return pd.DataFrame()
+
+        except Exception as e:
+            st.error(f"Data fetch error: {str(e)}")
+            return pd.DataFrame()
+
+    return pd.DataFrame()
 
 
 # ==========================================
@@ -403,7 +487,7 @@ with st.sidebar:
                     stocks_list = list(set(stocks_dict.values()))
                     def progress_callback(done, total):
                         progress_bar.progress(done / total)
-                    results = update_all_stocks(stocks_list, max_workers=5, progress_callback=progress_callback)
+                    results = update_all_stocks(stocks_list, max_workers=2, progress_callback=progress_callback)
                     if len(results) > 0:
                         save_to_database(results)
                         st.success(f"✅ Updated {len(results)} stocks!")
@@ -452,66 +536,83 @@ with st.sidebar:
                 st.caption("✅ On")
     
     else:
+        
         # ==========================================
-        # DESKTOP: Full Sidebar
+        # SIDEBAR - PROFESSIONAL COMPACT LAYOUT
         # ==========================================
+        with st.sidebar:
         
-        # DATA CONTROL SECTION
-        st.markdown("### 🔄 Data")
+            # ==========================================
+            # DATA CONTROL (Compact with Admin Protection)
+            # ==========================================
+            # ==========================================
+            # DATA CONTROL (Combined Horizontal)
+            # ==========================================
+            col_d1, col_d2 = st.columns(2)
 
-        if st.button("📥 Update Data", use_container_width=True, key="update_data"):
-            progress_bar = st.progress(0)
-            with st.spinner("Updating market data..."):
-                stocks_list = list(set(stocks_dict.values()))
-                def progress_callback(done, total):
-                    progress_bar.progress(done / total)
-                results = update_all_stocks(stocks_list, max_workers=5, progress_callback=progress_callback)
-                if len(results) == 0:
-                    st.error("❌ No data fetched! Problem in API or symbols")
-                else:
-                    save_to_database(results)
-                    st.success(f"✅ Updated {len(results)} stocks!")
-            st.rerun()
+            with col_d1:
+                if st.button("🔄 Update", use_container_width=True, help="Update Market Data"):
+                    progress_bar = st.progress(0)
+                    with st.spinner("Updating..."):
+                        stocks_list = list(set(stocks_dict.values()))
+                        def progress_callback(done, total):
+                            progress_bar.progress(done / total)
+                        results = update_all_stocks(stocks_list, max_workers=2, progress_callback=progress_callback)
+                        if len(results) > 0:
+                            save_to_database(results)
+                            st.success(f"✅ {len(results)} stocks")
+                        else:
+                            st.error("❌ No data")
+                    st.rerun()
 
-        # ❌ CLEAR DATABASE BUTTON REMOVED
-        
-        # TRADING MODE SECTION
-        st.markdown("### 🎯 Mode")
-        st.session_state['trading_mode'] = st.selectbox(
-            "Strategy",
-            ["Conservative", "Aggressive", "Ultra Aggressive"],
-            index=["Conservative", "Aggressive", "Ultra Aggressive"].index(
-                st.session_state['trading_mode']
-            ),
-            label_visibility="collapsed"
-        )
-        
-        st.markdown("---")
-        
-        # BACKTEST SECTION
-        st.markdown("### ⏱️ Backtest")
-        if st.button("📊 Launch Studio", use_container_width=True, key="open_backtest"):
-            st.session_state['show_backtest_page'] = True
-            st.rerun()
-        st.caption("Historical performance")
-        
-        st.markdown("---")
-        
-        # WATCHLIST SECTION
-        st.markdown("### 📋 Watchlist")
-        watchlist_fragment(stocks_dict)
-        
-        st.markdown("---")
-        
-        # SYSTEM STATUS
-        st.markdown("### ⚡ Status")
-        col_s1, col_s2 = st.columns(2)
-        with col_s1:
-            st.caption("Brain")
-            st.caption("✅ Active")
-        with col_s2:
-            st.caption("Kalman")
-            st.caption("✅ On")
+            with col_d2:
+                if st.button("🗑️ Clear", use_container_width=True, help="Clear Cache (Admin Only)"):
+                    with st.popover("🔐 Admin Verification"):
+                        admin_password = st.text_input("Password", type="password", key="admin_clear_pass")
+                        if admin_password:
+                            if admin_password == "TORO_ADMIN_2024":
+                                st.cache_data.clear()
+                                st.success("✅ Cache cleared!")
+                                st.rerun()
+                            else:
+                                st.error("❌ Wrong password!")
+            
+            # ==========================================
+            # TRADING MODE
+            # ==========================================
+            st.selectbox(
+                "",
+                ["Conservative", "Aggressive", "Ultra Aggressive"],
+                index=["Conservative", "Aggressive", "Ultra Aggressive"].index(
+                    st.session_state.get('trading_mode', "Aggressive")
+                ),
+                label_visibility="collapsed",
+                key="mode_selector"
+            )
+            
+            # ==========================================
+            # BACKTEST
+            # ==========================================
+            if st.button("📊 Backtest", use_container_width=True, key="open_backtest"):
+                st.session_state['show_backtest_page'] = True
+                st.rerun()
+            
+            # ==========================================
+            # WATCHLIST
+            # ==========================================
+            st.markdown("### 📋 Watchlist")
+            watchlist_fragment(stocks_dict)
+            
+            # ==========================================
+            # SYSTEM STATUS
+            # ==========================================
+            col_s1, col_s2 = st.columns(2)
+            with col_s1:
+                st.markdown("🧠 **Brain**")
+                st.caption("Active")
+            with col_s2:
+                st.markdown("📉 **Kalman**")
+                st.caption("On")
 
 
 # ==========================================
@@ -867,7 +968,7 @@ with st.expander("🧠 AI MARKET INSIGHTS", expanded=True):
 # ENSEMBLE VOTING RESULTS (6 Strategies)
 # ==========================================
 st.markdown("---")
-st.markdown("### 🧠 AI ENSEMBLE VOTING")
+st.markdown("### 🧠AI ENSEMBLE VOTING")
 
 # Get ensemble analysis from all 6 strategies
 ensemble_result = brain.get_ensemble_analysis(data, levels)
@@ -942,7 +1043,7 @@ with col_e3:
 
 
 # Show individual strategy results
-with st.expander("📊 View Individual Strategy Results"):
+with st.expander("⚙️Ensemble Voting Breakdown"):
     for strategy in ensemble_result['strategy_results']:
         if strategy['signal'] == 1:
             icon = "🟢"
@@ -991,7 +1092,7 @@ with st.expander("📊 View Individual Strategy Results"):
     )
 
 # Show key reasons
-with st.expander("📝 Key Reasons for Decision"):
+with st.expander("⚡Trade Logic Analysis"):
     for reason in ensemble_result['reasons'][:5]:
         st.markdown(f"• {reason}")
 
@@ -999,7 +1100,7 @@ with st.expander("📝 Key Reasons for Decision"):
 # ==========================================
 # ADVANCED MATHEMATICS (Expandable)
 # ==========================================
-with st.expander("📊 ADVANCED MATHEMATICS", expanded=False):
+with st.expander("📊QUANT ANALYTICS", expanded=False):
     
     # ==========================================
     # QUANTITATIVE INTELLIGENCE
@@ -1226,7 +1327,7 @@ if quant_metrics.get('sample_size', 0) == 0:
 # ==========================================
 # PROFESSIONAL CHART - FULL WIDTH
 # ==========================================
-st.subheader("📊 Professional Trading Terminal")
+st.subheader("⚙️TORO Trading Terminal")
 render_chart(
     symbol=stock,
     levels=levels,
