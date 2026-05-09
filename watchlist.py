@@ -1,4 +1,5 @@
-# watchlist.py
+# watchlist.py - Optimized Compact Version
+
 import streamlit as st
 import yfinance as yf
 import json
@@ -35,8 +36,6 @@ def save_watchlist():
     with open(WATCHLIST_FILE, "w") as f:
         json.dump(st.session_state.watchlist, f, indent=2)
 
-
-
 # ==========================================
 # WATCHLIST FUNCTIONS
 # ==========================================
@@ -61,22 +60,66 @@ def remove_from_watchlist(stock_symbol):
     save_watchlist()
 
 # ==========================================
-# FETCH LIVE DATA FOR WATCHLIST
+# FETCH LIVE DATA FOR WATCHLIST (OPTIMIZED)
 # ==========================================
 @st.fragment(run_every=5)
 def watchlist_fragment(stocks_dict):
-    """Updates watchlist prices every 5 seconds"""
+    """Updates watchlist prices every 5 seconds - Compact version"""
+    
+    # Add custom CSS for compact watchlist
+    st.markdown("""
+    <style>
+    /* Compact watchlist styling */
+    .watchlist-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 4px 0;
+        margin: 2px 0;
+        border-bottom: 1px solid rgba(0,255,255,0.08);
+    }
+    .watchlist-name {
+        font-size: 12px;
+        font-weight: 600;
+        color: #ffffff;
+        cursor: pointer;
+    }
+    .watchlist-symbol {
+        font-size: 9px;
+        color: #64748b;
+    }
+    .watchlist-price {
+        font-size: 12px;
+        font-weight: 600;
+        text-align: right;
+    }
+    .watchlist-change {
+        font-size: 10px;
+        text-align: right;
+    }
+    .watchlist-remove {
+        font-size: 14px;
+        cursor: pointer;
+        color: #64748b;
+        padding: 0 4px;
+    }
+    .watchlist-remove:hover {
+        color: #ff1744;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     if not st.session_state.watchlist:
         st.markdown(
             """
             <div style="
                 text-align: center;
-                padding: 20px;
-                color: #94a3b8;
-                font-size: 13px;
+                padding: 15px;
+                color: #64748b;
+                font-size: 11px;
             ">
-                📋 Your watchlist is empty<br>
-                <span style="font-size: 11px;">Search a stock and click ⭐ to add</span>
+                📋 Empty<br>
+                <span style="font-size: 9px;">Click ⭐ to add stocks</span>
             </div>
             """,
             unsafe_allow_html=True
@@ -86,6 +129,7 @@ def watchlist_fragment(stocks_dict):
     for item in st.session_state.watchlist:
         symbol = item['symbol']
         name = item.get('name', symbol)
+        display_name = name.replace('.NS', '').replace('.BO', '')[:12]  # Truncate long names
         
         try:
             ticker = yf.Ticker(symbol)
@@ -98,58 +142,59 @@ def watchlist_fragment(stocks_dict):
                 pct = (change / prev_close) * 100
                 
                 if change >= 0:
-                    color = "#16a34a"
+                    color = "#00ff88"
                     arrow = "▲"
                 else:
-                    color = "#dc2626"
+                    color = "#ff1744"
                     arrow = "▼"
                 
-                # Row layout
-                col1, col2, col3 = st.columns([4, 2, 0.8])
+                # Compact layout without columns
+                col1, col2, col3 = st.columns([3.5, 1.5, 0.5])
                 
                 with col1:
-                    if st.button(f"📈 {name}", key=f"wl_{symbol}", use_container_width=True):
-                       st.session_state.watchlist_clicked_stock = symbol
-                       st.session_state.watchlist_clicked_name = name
-                    
-                    st.markdown(
-                        f"""<div style="font-size:10px; color:#94a3b8;">{symbol}</div>""",
-                        unsafe_allow_html=True
-                    )
+                    # Smaller button for stock name
+                    if st.button(f"📊 {display_name}", key=f"wl_{symbol}", use_container_width=True):
+                        st.session_state.watchlist_clicked_stock = symbol
+                        st.session_state.watchlist_clicked_name = name
+                    st.caption(symbol.replace('.NS', '').replace('.BO', ''))
                 
                 with col2:
                     st.markdown(
                         f"""
                         <div style="text-align: right;">
-                            <div style="font-size: 14px; font-weight: 700; color: #0f172a;">
-                                ₹{live_price:,.2f}
-                            </div>
-                            <div style="font-size: 11px; color: {color};">
-                                {arrow} {abs(pct):.2f}%
-                            </div>
+                            <span style="font-size: 13px; font-weight: 700;">₹{live_price:,.2f}</span>
+                            <br>
+                            <span style="font-size: 10px; color: {color};">{arrow} {abs(pct):.2f}%</span>
                         </div>
                         """,
                         unsafe_allow_html=True
                     )
                 
                 with col3:
-                    if st.button("✕", key=f"del_{symbol}", help="Remove from watchlist"):
+                    if st.button("✕", key=f"del_{symbol}", help="Remove"):
                         remove_from_watchlist(symbol)
                         st.rerun()
                 
-                st.markdown("<hr style='margin:4px 0; opacity:0.3;'>", unsafe_allow_html=True)
+                # Minimal separator
+                st.markdown("<hr style='margin:2px 0; opacity:0.2;'>", unsafe_allow_html=True)
                 
-        except:
+        except Exception as e:
             st.markdown(
                 f"""
                 <div style="
-                    padding: 8px;
-                    border-radius: 6px;
-                    background: rgba(100,116,139,0.05);
-                    margin: 4px 0;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 6px 0;
                 ">
-                    <span style="font-size:12px; color:#94a3b8;">{name}</span>
-                    <span style="font-size:10px; color:#dc2626;"> — Data unavailable</span>
+                    <div>
+                        <span style="font-size: 11px; font-weight: 500;">{display_name}</span>
+                        <br>
+                        <span style="font-size: 8px; color: #64748b;">{symbol}</span>
+                    </div>
+                    <div>
+                        <span style="font-size: 10px; color: #ff1744;">⚠️ No data</span>
+                    </div>
                 </div>
                 """,
                 unsafe_allow_html=True
