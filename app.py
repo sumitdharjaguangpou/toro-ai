@@ -11,6 +11,7 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 from datetime import datetime
+import time
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -24,9 +25,9 @@ from backtest_engine import BacktestEngine, BacktestVisualizer
 from datetime import timedelta
 from brain_ultimate import ultimate_brain as brain
 from quant_analytics import render_quant_analytics
+# At the top with other imports
+from indices import render_indices
 from about import render_about 
-
-
 from data_manager import (
     init_database,
     update_all_stocks,
@@ -34,8 +35,16 @@ from data_manager import (
     should_update,
     clear_database
 )
+from yfinance.exceptions import YFRateLimitError
 
-
+# ==========================================
+# FORCE PERMANENT DARK MODE - ADD THIS BLOCK HERE
+# ==========================================
+st.set_page_config(
+    page_title="TORO AI",
+    page_icon="🐂",
+    layout="wide"
+)
 
 
 # ==========================================
@@ -427,15 +436,7 @@ st.markdown("""
 
 
 
-# ==========================================
-# PAGE CONFIG - MUST BE FIRST
-# ==========================================
 
-st.set_page_config(
-    page_title="TORO AI",
-    page_icon="🐂",
-    layout="wide"
-)
 
 # ==========================================
 # SESSION STATE INITIALIZATION
@@ -568,7 +569,6 @@ DEFAULT_TIMEFRAME = "1Y"
 # UI HEADER
 # ==========================================
 ui.render_header()
-
 
 # ==========================================
 # MOBILE OPTIMIZATION
