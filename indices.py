@@ -1,4 +1,4 @@
-# indices.py - Clickable Indices for TORO AI
+# indices.py - Clickable Indices for TORO AI (Light & Dark Mode Compatible)
 
 import streamlit as st
 import yfinance as yf
@@ -51,30 +51,72 @@ def get_index_data():
         } for key, info in INDICES.items()}
 
 def render_indices():
-    """Render clickable indices - called from ui.py"""
+    """Render clickable indices - Light & Dark Mode Compatible"""
     
     indices_data = get_index_data()
     
-    # Cyber theme CSS for index buttons
+    # Theme-aware CSS for index buttons (works in both light and dark mode)
     st.markdown("""
     <style>
-    /* Index button styling */
+    /* Light mode styles */
+    @media (prefers-color-scheme: light) {
+        .stButton button {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef) !important;
+            border: 1px solid #dee2e6 !important;
+            color: #212529 !important;
+        }
+        
+        .stButton button:hover {
+            background: linear-gradient(135deg, #e9ecef, #dee2e6) !important;
+            border-color: #adb5bd !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        .positive-change {
+            color: #008000 !important;
+        }
+        
+        .negative-change {
+            color: #dc3545 !important;
+        }
+    }
+    
+    /* Dark mode styles */
+    @media (prefers-color-scheme: dark) {
+        .stButton button {
+            background: linear-gradient(135deg, #2d2d2d, #1a1a1a) !important;
+            border: 1px solid #404040 !important;
+            color: #e0e0e0 !important;
+        }
+        
+        .stButton button:hover {
+            background: linear-gradient(135deg, #404040, #2d2d2d) !important;
+            border-color: #666666 !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+        }
+        
+        .positive-change {
+            color: #00ff88 !important;
+        }
+        
+        .negative-change {
+            color: #ff6b6b !important;
+        }
+    }
+    
+    /* Base button styling */
     .stButton button {
-        background: linear-gradient(135deg, rgba(10, 20, 40, 0.8), rgba(5, 10, 20, 0.9)) !important;
-        border: 1px solid rgba(0, 255, 255, 0.2) !important;
         border-radius: 20px !important;
         padding: 6px 12px !important;
         height: auto !important;
         transition: all 0.2s ease !important;
         font-size: 12px !important;
         white-space: nowrap !important;
+        font-weight: 500 !important;
     }
     
     .stButton button:hover {
         transform: translateY(-1px) !important;
-        border-color: rgba(0, 255, 255, 0.6) !important;
-        box-shadow: 0 2px 8px rgba(0, 255, 255, 0.15) !important;
-        background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(10, 20, 40, 0.95)) !important;
     }
     
     /* Mobile responsive */
@@ -84,6 +126,12 @@ def render_indices():
             font-size: 10px !important;
             white-space: normal !important;
         }
+    }
+    
+    /* Ensure text contrast in both themes */
+    .stButton button p {
+        margin: 0 !important;
+        line-height: 1.4 !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -109,8 +157,11 @@ def render_indices():
             
             arrow = "▲" if is_positive else "▼"
             
-            # Single line button text (no HTML tags)
-            button_text = f"{display_name} {price_text} {arrow} {change_pct:.1f}%"
+            # Use markdown formatting within button for colored text
+            if is_positive:
+                button_text = f"{display_name} {price_text} :green[{arrow} {change_pct:.1f}%]"
+            else:
+                button_text = f"{display_name} {price_text} :red[{arrow} {change_pct:.1f}%]"
             
             if st.button(button_text, key=f"index_{key}", use_container_width=True):
                 st.session_state.selected_stock = symbol
