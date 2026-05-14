@@ -62,53 +62,167 @@ def get_delta_update(stock):
 def render_header():
     st.markdown("""
     <style>
-                
+    /* ========================================== */
+    /* COMPACT BOX STYLES - FOR REGIME & METRICS  */
+    /* ========================================== */
+    
+    .compact-box {
+        background: linear-gradient(135deg, rgba(10,20,40,0.95), rgba(5,10,20,0.98));
+        border-radius: 10px;
+        border: 1px solid rgba(0,255,255,0.15);
+        padding: 10px 8px;
+        margin: 4px 0;
+        text-align: center;
+        transition: all 0.2s ease;
+    }
+    
+    .compact-box:hover {
+        border-color: rgba(0,255,255,0.4);
+        box-shadow: 0 2px 12px rgba(0,255,255,0.1);
+    }
+    
+    .compact-label {
+        font-size: 9px;
+        color: #8892b0;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+    }
+    
+    .compact-value {
+        font-size: 14px;
+        font-weight: 700;
+        color: #00ffff;
+        line-height: 1.3;
+    }
+    
+    .compact-delta {
+        font-size: 9px;
+        color: #ffd700;
+        margin-top: 4px;
+    }
+    
+    .compact-sub {
+        font-size: 8px;
+        color: #64748b;
+        margin-top: 2px;
+    }
+    
+    /* Regime-specific colors */
+    .regime-trending-bull {
+        color: #00ff88 !important;
+    }
+    
+    .regime-trending-bear {
+        color: #ff1744 !important;
+    }
+    
+    .regime-sideways {
+        color: #ffd700 !important;
+    }
+    
+    .regime-high-volatility {
+        color: #ffa500 !important;
+    }
+    
     :root {
         --buy-bg: rgba(34,197,94,0.12);
         --buy-color: #16a34a;
         --buy-border: rgba(34,197,94,0.28);
-
         --sell-bg: rgba(239,68,68,0.12);
         --sell-color: #dc2626;
         --sell-border: rgba(239,68,68,0.28);
-
         --neutral-bg: rgba(245,158,11,0.12);
         --neutral-color: #d97706;
         --neutral-border: rgba(245,158,11,0.28);
     }
-                
+    
+    
+    /* Indices container styles */
+    .indices-container {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .index-item {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        background: rgba(0, 255, 255, 0.05);
+        padding: 5px 12px;
+        border-radius: 20px;
+        border: 1px solid rgba(0, 255, 255, 0.15);
+        transition: all 0.2s ease;
+    }
+
+    .index-item:hover {
+        border-color: rgba(0, 255, 255, 0.4);
+        background: rgba(0, 255, 255, 0.08);
+    }
+
+    .index-name {
+        font-size: 11px;
+        font-weight: 600;
+        color: #8892b0;
+    }
+
+    .index-price {
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .index-change {
+        font-size: 10px;
+        font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+        .indices-container {
+            justify-content: center;
+            margin-top: 8px;
+        }
+        .index-item {
+            padding: 3px 8px;
+        }
+        .index-name {
+            font-size: 9px;
+        }
+        .index-price {
+            font-size: 11px;
+        }
+    }
+        
+    
     /* ===================================== */
     /* ADAPTIVE TORO AI HEADER STYLES        */
-    /* WORKS IN BOTH DARK & LIGHT MODE       */
     /* ===================================== */
-
+    
     /* Streamlit native theme support */
     .stApp {
         background-color: var(--background-color);
         color: var(--text-color);
     }
-
+    
     /* Global spacing fix */
     .block-container {
         padding-top: 1.5rem !important;
         padding-bottom: 1rem !important;
     }
-
+    
     /* Remove top white strip */
     header[data-testid="stHeader"] {
         background: transparent !important;
         height: 0px !important;
     }
-
+    
     /* Remove toolbar spacing issue */
     div[data-testid="stToolbar"] {
         top: 0.5rem;
         right: 1rem;
     }
-
-    /* ===================================== */
-    /* ADAPTIVE HEADER - DETECTS THEME       */
-    /* ===================================== */
     
     /* Container styling - adapts to theme */
     .toro-header-container {
@@ -330,13 +444,24 @@ def render_header():
             box-shadow: 0 8px 32px rgba(0, 255, 255, 0.2);
         }
     }
-
+    
     /* Search input width */
     div[data-testid="stTextInput"] {
         max-width: 320px !important;
     }
-
+    
+    /* Responsive */
     @media (max-width: 768px) {
+        .compact-value {
+            font-size: 12px;
+        }
+        .compact-label {
+            font-size: 8px;
+        }
+        .compact-delta, .compact-sub {
+            font-size: 7px;
+        }
+        
         .toro-title {
             font-size: 22px !important;
             letter-spacing: 2px;
@@ -352,7 +477,7 @@ def render_header():
             padding: 1px 6px !important;
             margin-left: 8px !important;
         }
-
+        
         div[data-testid="stTextInput"] {
             max-width: 100% !important;
         }
@@ -363,27 +488,31 @@ def render_header():
             gap: 8px;
         }
     }
-    
     </style>
     """, unsafe_allow_html=True)
-
-    # Premium header layout with enhanced styling
-    st.markdown('<div class="toro-header-container">', unsafe_allow_html=True)
     
-    col_img, col_text = st.columns([0.12, 0.88], gap="small")
-
-    with col_img:
-        st.image("toro_ai_logo.png", width=80)
-
-    with col_text:
-        st.markdown("""
-        <div>
-            <span class="toro-title">TORO AI</span>
-            <span class="ai-badge">⚡ QUANTUM AI ⚡</span>
-            <div class="toro-subtitle">🔮 Neural Stock Intelligence & Predictive Analytics 🔮</div>
-        </div>
-        """, unsafe_allow_html=True)
     
+    # ==========================================
+    # HEADER WITH LOGO AND INDICES
+    # ==========================================
+
+    st.markdown('<div class="toro-header-container" style="padding: 8px 15px;">', unsafe_allow_html=True)
+    
+    # Create two columns: logo on left, indices on right
+    col_logo, col_indices = st.columns([0.3, 0.7], gap="small")
+    
+    with col_logo:
+        # Logo and title
+        logo_col, title_col = st.columns([0.3, 0.7])
+        with logo_col:
+            st.image("toro_ai_logo.png", width=50)
+        with title_col:
+            st.markdown('<span class="toro-title" style="font-size: 20px; font-weight: 800;">TORO AI</span>', unsafe_allow_html=True)
+    
+    with col_indices:
+        from indices import render_indices
+        render_indices()
+
     st.markdown('</div>', unsafe_allow_html=True)
     
     # Animated neon divider
@@ -398,6 +527,65 @@ def render_header():
     </div>
     """, unsafe_allow_html=True)
 
+
+# =======================
+# RENDER REGIME DISPLAY
+# =======================
+def render_regime_display(regime_data):
+    """Cleanly display market regime data"""
+    
+    if not regime_data:
+        st.info("📊 Analyzing market regime...")
+        return
+    
+    regime = regime_data.get("regime", "UNKNOWN")
+    strength = regime_data.get("strength", 0)
+    volatility = regime_data.get("volatility", 0)
+    confidence = regime_data.get("confidence", 0)
+    
+    # Regime styling
+    regime_styles = {
+        "TRENDING_BULL": {"icon": "📈", "color": "#00ff88", "label": "Bullish Trend"},
+        "TRENDING_BEAR": {"icon": "📉", "color": "#ff1744", "label": "Bearish Trend"},
+        "SIDEWAYS": {"icon": "🔄", "color": "#ffd700", "label": "Range Bound"},
+        "HIGH_VOLATILITY": {"icon": "⚠️", "color": "#ffa500", "label": "High Volatility"},
+        "ACCUMULATION": {"icon": "💰", "color": "#00e5ff", "label": "Accumulation"},
+        "DISTRIBUTION": {"icon": "💸", "color": "#ff5252", "label": "Distribution"},
+        "UNKNOWN": {"icon": "❓", "color": "#8892b0", "label": "Unknown"}
+    }
+    
+    style = regime_styles.get(regime, regime_styles["UNKNOWN"])
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown(f"""
+        <div class="compact-box">
+            <div class="compact-label">📊 MARKET REGIME</div>
+            <div class="compact-value" style="color: {style['color']};">{style['icon']} {style['label']}</div>
+            <div class="compact-delta">Confidence: {confidence:.0f}%</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        strength_color = "#00ff88" if strength >= 70 else "#ffd700" if strength >= 50 else "#ffa500"
+        st.markdown(f"""
+        <div class="compact-box">
+            <div class="compact-label">💪 TREND STRENGTH</div>
+            <div class="compact-value" style="color: {strength_color};">{strength:.0f}%</div>
+            <div class="compact-delta">Signal reliability</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        vol_color = "#ff1744" if volatility > 30 else "#ffa500" if volatility > 20 else "#00ff88"
+        st.markdown(f"""
+        <div class="compact-box">
+            <div class="compact-label">⚡ VOLATILITY</div>
+            <div class="compact-value" style="color: {vol_color};">{volatility:.1f}%</div>
+            <div class="compact-delta">Annualized risk</div>
+        </div>
+        """, unsafe_allow_html=True)
 
 # =========================
 # RENDER SEARCH
