@@ -1,52 +1,21 @@
-# brain_ultimate.py - The Ultimate Trading Intelligence System
-# Merged: brain.py + brain_v2.py + brain_aggressive.py
-# Optimized for maximum performance
+"""
+TORO AI - MATHEMATICS-FIRST TRADING SYSTEM
+Minimal indicators, maximum math
+FULLY COMPATIBLE with app.py
+"""
 
 import pandas as pd
 import numpy as np
 from datetime import datetime
-from collections import Counter
+from regime_models import market_regime_engine
+from advanced_math import AdvancedQuantModels
 
 # ==========================================
-# PART 1: KALMAN FILTER (Noise Reduction)
+# ONLY 6 CORE INDICATORS (Plus compatibility columns)
 # ==========================================
 
-class KalmanFilter:
-    """Advanced noise reduction for cleaner signals"""
-    
-    def __init__(self, process_variance=1e-3, measurement_variance=1e-2):
-        self.q = process_variance
-        self.r = measurement_variance
-        self.p = 1.0
-        self.k = 0.0
-        self.x = None
-        self.initialized = False
-    
-    def filter(self, measurement):
-        if not self.initialized:
-            self.x = measurement
-            self.initialized = True
-            return measurement
-        
-        self.p = self.p + self.q
-        self.k = self.p / (self.p + self.r)
-        self.x = self.x + self.k * (measurement - self.x)
-        self.p = (1 - self.k) * self.p
-        return self.x
-    
-    def filter_series(self, series):
-        filtered = []
-        for value in series:
-            filtered.append(self.filter(value))
-        return filtered
-
-
-# ==========================================
-# PART 2: INDICATORS ENGINE (41+ Indicators)
-# ==========================================
-
-class IndicatorsEngine:
-    """Calculates all technical indicators"""
+class SimplifiedIndicators:
+    """Only essential indicators - rest is math"""
     
     @staticmethod
     def calculate_all(df):
@@ -58,42 +27,49 @@ class IndicatorsEngine:
         l = df["Low"]
         v = df["Volume"]
         
-        # TREND INDICATORS
+        # 1. TREND (EMA 9,20,50,200 for compatibility)
         df["EMA_9"] = c.ewm(span=9, adjust=False).mean()
         df["EMA_20"] = c.ewm(span=20, adjust=False).mean()
         df["EMA_50"] = c.ewm(span=50, adjust=False).mean()
         df["EMA_200"] = c.ewm(span=200, adjust=False).mean()
         
-        # RSI
-        delta = c.diff()
-        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-        rs = gain / loss
-        df["RSI"] = 100 - (100 / (1 + rs))
-        
-        # MACD
+        # 2. MOMENTUM (MACD with all components)
         exp1 = c.ewm(span=12, adjust=False).mean()
         exp2 = c.ewm(span=26, adjust=False).mean()
         df["MACD"] = exp1 - exp2
         df["Signal_Line"] = df["MACD"].ewm(span=9, adjust=False).mean()
         df["MACD_Histogram"] = df["MACD"] - df["Signal_Line"]
         
-        # ATR
+        # 3. VOLATILITY (ATR)
         tr1 = h - l
         tr2 = (h - c.shift()).abs()
         tr3 = (l - c.shift()).abs()
         tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
         df["ATR"] = tr.rolling(14).mean()
         
-        # Bollinger Bands - FIXED SECTION
-        # Bollinger Bands
-        df["BB_Middle"] = df["Close"].rolling(20).mean()
-        bb_std = df["Close"].rolling(20).std()
+        # 4. MEAN REVERSION (RSI)
+        delta = c.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+        rs = gain / loss
+        df["RSI"] = 100 - (100 / (1 + rs))
+        
+        # 5. VOLUME (Ratio and MA)
+        df["Volume_MA"] = v.rolling(20).mean()
+        df["Volume_Ratio"] = v / df["Volume_MA"]
+        
+        # 6. Bollinger Bands (for compatibility)
+        df["BB_Middle"] = c.rolling(20).mean()
+        bb_std = c.rolling(20).std()
         df["BB_Upper"] = df["BB_Middle"] + (bb_std * 2)
         df["BB_Lower"] = df["BB_Middle"] - (bb_std * 2)
         df["BB_Width"] = (df["BB_Upper"] - df["BB_Lower"]) / df["BB_Middle"]
-                
-        # ADX
+        
+        # 7. Support/Resistance (for compatibility)
+        df["Support_20"] = l.rolling(20).min()
+        df["Resistance_20"] = h.rolling(20).max()
+        
+        # 8. ADX (for compatibility)
         plus_dm = h.diff()
         minus_dm = l.diff()
         plus_dm = plus_dm.where((plus_dm > minus_dm) & (plus_dm > 0), 0)
@@ -104,943 +80,1232 @@ class IndicatorsEngine:
         dx = (abs(plus_di - minus_di) / (plus_di + minus_di)) * 100
         df["ADX"] = dx.rolling(14).mean()
         
-        # Volume Indicators
-        df["Volume_MA"] = v.rolling(20).mean()
-        df["Volume_Ratio"] = v / df["Volume_MA"]
-        
-        # OBV
-        obv = [0]
-        for i in range(1, len(df)):
-            if c.iloc[i] > c.iloc[i-1]:
-                obv.append(obv[-1] + v.iloc[i])
-            elif c.iloc[i] < c.iloc[i-1]:
-                obv.append(obv[-1] - v.iloc[i])
-            else:
-                obv.append(obv[-1])
-        df["OBV"] = obv
-        df["OBV_Trend"] = df["OBV"].rolling(20).mean()
-        
-        # Support/Resistance
-        df["Resistance_20"] = h.rolling(20).max()
-        df["Support_20"] = l.rolling(20).min()
-        df["Pivot"] = (h + l + c) / 3
-        df["R1"] = (2 * df["Pivot"]) - l
-        df["S1"] = (2 * df["Pivot"]) - h
+        # 9. Signal column (default 0)
+        df["Signal"] = 0
         
         return df
 
+
 # ==========================================
-# PART 3: SIX POWERFUL STRATEGIES
+# MATHEMATICAL MODELS (The Real Power)
 # ==========================================
 
-class StrategyMomentumBreakout:
-    """Catches stocks breaking to new highs with volume"""
+class MathematicalModels:
+    """Pure math - no indicators needed"""
     
-    def analyze(self, df):
-        if len(df) < 50:
-            return 0, 50, ["Insufficient data"]
-        
-        latest = df.iloc[-1]
-        reasons = []
-        confidence = 50
-        
-        year_high = df['High'].tail(252).max()
-        if latest['Close'] >= year_high * 0.98:
-            confidence += 20
-            reasons.append(f"Near 52-week high: {year_high:.2f}")
-        
-        volume_ratio = latest.get('Volume_Ratio', 1)
-        if volume_ratio > 1.5:
-            confidence += 15
-            reasons.append(f"Volume surge: {volume_ratio:.1f}x")
-        
-        adx = latest.get('ADX', 20)
-        if adx > 30:
-            confidence += 15
-            reasons.append(f"Strong trend: ADX {adx:.0f}")
-        
-        if confidence >= 70:
-            return 1, min(confidence, 90), reasons
-        return 0, confidence, reasons
-
-
-class StrategyPullbackSnap:
-    """Buys dips within strong uptrends"""
+    @staticmethod
+    def calculate_expected_value(returns, win_rate, avg_win, avg_loss):
+        """Expected value per trade"""
+        return (win_rate * avg_win) - ((1 - win_rate) * avg_loss)
     
-    def analyze(self, df):
-        if len(df) < 50:
-            return 0, 50, ["Insufficient data"]
-        
-        latest = df.iloc[-1]
-        prev = df.iloc[-2]
-        reasons = []
-        confidence = 50
-        
-        ema20 = latest.get('EMA_20', 0)
-        ema50 = latest.get('EMA_50', 0)
-        price = latest['Close']
-        
-        if price > ema20 > ema50:
-            confidence += 20
-            reasons.append("Uptrend intact")
-        else:
-            return 0, confidence, ["Not in uptrend"]
-        
-        rsi = latest.get('RSI', 50)
-        prev_rsi = prev.get('RSI', 50)
-        
-        if 30 < rsi < 60 and prev_rsi > rsi:
-            confidence += 15
-            reasons.append(f"RSI cooling: {prev_rsi:.0f} to {rsi:.0f}")
-        
-        if price <= ema20 * 1.02:
-            confidence += 15
-            reasons.append("Price near EMA20 support")
-        
-        volume_ratio = latest.get('Volume_Ratio', 1)
-        if volume_ratio < 0.8:
-            confidence += 10
-            reasons.append("Low volume pullback - healthy")
-        
-        if confidence >= 70:
-            return 1, min(confidence, 90), reasons
-        return 0, confidence, reasons
-
-
-class StrategyVWAPReversal:
-    """Trades extreme oversold/overbought conditions"""
+    @staticmethod
+    def calculate_sharpe_ratio(returns, risk_free_rate=0.05):
+        """Risk-adjusted returns"""
+        if len(returns) < 2 or returns.std() == 0:
+            return 0
+        excess_returns = returns.mean() * 252 - risk_free_rate
+        return excess_returns / (returns.std() * np.sqrt(252))
     
-    def analyze(self, df):
-        if len(df) < 20:
-            return 0, 50, ["Insufficient data"]
-        
-        latest = df.iloc[-1]
-        reasons = []
-        confidence = 50
-        
-        rsi = latest.get('RSI', 50)
-        
-        if rsi < 25:
-            confidence += 35
-            reasons.append(f"Extreme oversold: RSI {rsi:.0f}")
-            
-            bb_lower = latest.get('BB_Lower', 0)
-            if bb_lower > 0 and latest['Close'] <= bb_lower * 1.02:
-                confidence += 15
-                reasons.append("Price at lower Bollinger Band")
-            
-            return 1, min(confidence, 85), reasons
-        
-        elif rsi > 75:
-            confidence += 35
-            reasons.append(f"Extreme overbought: RSI {rsi:.0f}")
-            
-            bb_upper = latest.get('BB_Upper', 0)
-            if bb_upper > 0 and latest['Close'] >= bb_upper * 0.98:
-                confidence += 15
-                reasons.append("Price at upper Bollinger Band")
-            
-            return -1, min(confidence, 85), reasons
-        
-        return 0, confidence, ["No extreme condition"]
-
-
-class StrategyTrendReversal:
-    """Catches early trend reversals"""
+    @staticmethod
+    def calculate_kelly_criterion(win_prob, win_loss_ratio):
+        """Optimal position sizing"""
+        if win_loss_ratio <= 0:
+            return 0
+        return (win_prob * win_loss_ratio - (1 - win_prob)) / win_loss_ratio
     
-    def analyze(self, df):
-        if len(df) < 30:
-            return 0, 50, ["Insufficient data"]
-        
-        latest = df.iloc[-1]
-        prev = df.iloc[-2]
-        reasons = []
-        confidence = 50
-        
-        macd = latest.get('MACD', 0)
-        prev_macd = prev.get('MACD', 0)
-        signal = latest.get('Signal_Line', 0)
-        prev_signal = prev.get('Signal_Line', 0)
-        
-        if macd > signal and prev_macd <= prev_signal:
-            confidence += 25
-            reasons.append("MACD bullish crossover")
-        elif macd > signal:
-            confidence += 10
-            reasons.append("MACD above signal line")
-        
-        rsi = latest.get('RSI', 50)
-        prev_rsi = prev.get('RSI', 50)
-        
-        if prev_rsi < 50 < rsi:
-            confidence += 20
-            reasons.append(f"RSI crossed above 50")
-        
-        ema20 = latest.get('EMA_20', 0)
-        if latest['Close'] > ema20:
-            confidence += 10
-            reasons.append("Price above EMA20")
-        
-        if confidence >= 70:
-            return 1, min(confidence, 85), reasons
-        return 0, confidence, reasons
-
-
-class StrategyVolatilityExpansion:
-    """Catches explosive moves after low volatility"""
+    @staticmethod
+    def calculate_z_score(price, mean, std):
+        """Statistical distance from mean"""
+        if std == 0:
+            return 0
+        return (price - mean) / std
     
-    def analyze(self, df):
-        if len(df) < 20:
-            return 0, 50, ["Insufficient data"]
+    @staticmethod
+    def calculate_monte_carlo_probability(data, n_simulations=10000):
+        """Simple Monte Carlo probability"""
+        if len(data) < 20:
+            return 50
         
-        latest = df.iloc[-1]
-        reasons = []
-        confidence = 50
+        returns = data['Close'].pct_change().dropna()
+        if len(returns) < 10:
+            return 50
         
-        bb_width = latest.get('BB_Width', 0.1)
-        bb_width_20 = df['BB_Width'].rolling(20).mean().iloc[-1] if 'BB_Width' in df.columns else 0.1
+        mean_return = returns.mean()
+        std_return = returns.std()
         
-        if bb_width < bb_width_20 * 0.8:
-            confidence += 25
-            reasons.append(f"Bollinger squeeze detected")
+        simulations = np.random.normal(mean_return, std_return, n_simulations)
+        positive_sims = np.sum(simulations > 0)
         
-        volume_ratio = latest.get('Volume_Ratio', 1)
-        if volume_ratio > 1.5:
-            confidence += 15
-            reasons.append(f"Volume expansion: {volume_ratio:.1f}x")
-        
-        bb_upper = latest.get('BB_Upper', 0)
-        bb_lower = latest.get('BB_Lower', 0)
-        
-        if bb_upper > 0:
-            if latest['Close'] > bb_upper:
-                confidence += 20
-                reasons.append("Bullish breakout above upper band")
-                return 1, min(confidence, 90), reasons
-            elif latest['Close'] < bb_lower:
-                confidence += 20
-                reasons.append("Bearish breakdown below lower band")
-                return -1, min(confidence, 90), reasons
-        
-        return 0, confidence, reasons
-
-
-class StrategyConfidenceScoring:
-    """Main confidence scoring engine"""
-    
-    def analyze(self, df, levels=None):
-        if df.empty or len(df) < 50:
-            return 0, 50, ["Insufficient data"]
-        
-        latest = df.iloc[-1]
-        score = 50
-        reasons = []
-        
-        # RSI (30% weight)
-        rsi = latest.get('RSI', 50)
-        if rsi < 25:
-            score += 20
-            reasons.append(f"RSI extreme oversold ({rsi:.0f})")
-        elif rsi < 30:
-            score += 15
-            reasons.append(f"RSI oversold ({rsi:.0f})")
-        elif rsi < 35:
-            score += 10
-            reasons.append(f"RSI nearing oversold ({rsi:.0f})")
-        elif rsi > 75:
-            score -= 20
-            reasons.append(f"RSI extreme overbought ({rsi:.0f})")
-        elif rsi > 70:
-            score -= 15
-            reasons.append(f"RSI overbought ({rsi:.0f})")
-        elif rsi > 65:
-            score -= 10
-            reasons.append(f"RSI nearing overbought ({rsi:.0f})")
-        else:
-            reasons.append(f"RSI neutral ({rsi:.0f})")
-        
-        # MACD (25% weight)
-        macd = latest.get('MACD', 0)
-        signal = latest.get('Signal_Line', 0)
-        if macd > signal:
-            score += 12
-            reasons.append("MACD bullish crossover")
-        else:
-            score -= 12
-            reasons.append("MACD bearish crossover")
-        
-        # EMA Alignment (20% weight)
-        price = latest['Close']
-        ema20 = latest.get('EMA_20', price)
-        ema50 = latest.get('EMA_50', price)
-        
-        if price > ema20 > ema50:
-            score += 15
-            reasons.append("Perfect bullish alignment")
-        elif price > ema20:
-            score += 8
-            reasons.append("Price above EMA20")
-        elif price < ema20 < ema50:
-            score -= 15
-            reasons.append("Perfect bearish alignment")
-        elif price < ema20:
-            score -= 8
-            reasons.append("Price below EMA20")
-        
-        # Volume (10% weight)
-        volume_ratio = latest.get('Volume_Ratio', 1)
-        if volume_ratio > 1.5:
-            if score > 50:
-                score += 10
-                reasons.append(f"High volume confirmation ({volume_ratio:.1f}x)")
-            else:
-                score -= 10
-                reasons.append(f"High volume sell-off ({volume_ratio:.1f}x)")
-        
-        # ADX (10% weight)
-        adx = latest.get('ADX', 20)
-        if adx > 30:
-            if score > 50:
-                score += 10
-                reasons.append(f"Strong trend confirmation (ADX {adx:.0f})")
-        
-        # Risk-Reward (5% weight)
-        if levels:
-            rr = levels.get('risk_reward', 0)
-            if rr >= 2:
-                score += 8
-                reasons.append(f"Excellent risk-reward (1:{rr:.1f})")
-            elif rr < 1:
-                score -= 10
-                reasons.append(f"Poor risk-reward (1:{rr:.1f})")
-        
-        score = max(0, min(100, score))
-        
-        if score >= 65:
-            return 1, score, reasons
-        elif score <= 35:
-            return -1, score, reasons
-        else:
-            return 0, score, reasons
+        return (positive_sims / n_simulations) * 100
 
 
 # ==========================================
-# PART 4: ENSEMBLE VOTING SYSTEM
+# ADVANCED MARKET REGIME ENGINE
 # ==========================================
 
-class EnsembleVoting:
-    """6 strategies voting together for maximum accuracy"""
+class MarketRegimeEngine:
+    """Advanced market regime detection with adaptive weights"""
     
     def __init__(self):
-        self.strategies = [
-            StrategyMomentumBreakout(),
-            StrategyPullbackSnap(),
-            StrategyVWAPReversal(),
-            StrategyTrendReversal(),
-            StrategyVolatilityExpansion(),
-            StrategyConfidenceScoring()
-        ]
-        
-        self.strategy_names = [
-            "Momentum Breakout",
-            "Pullback Snap",
-            "VWAP Reversal",
-            "Trend Reversal",
-            "Volatility Expansion",
-            "Confidence Scoring"
-        ]
-        
-        # Weights for each strategy
-        self.weights = [1.2, 1.0, 1.3, 1.0, 1.2, 1.5]
+        # Regime-specific weights for different market conditions
+        self.regime_weights = {
+            "TRENDING_BULL": {
+                "trend": 1.4,
+                "momentum": 1.3,
+                "mean_reversion": 0.5,
+                "volume": 1.2,
+                "volatility": 0.8
+            },
+            "TRENDING_BEAR": {
+                "trend": 1.3,
+                "momentum": 1.2,
+                "mean_reversion": 0.6,
+                "volume": 1.1,
+                "volatility": 0.9
+            },
+            "SIDEWAYS": {
+                "trend": 0.6,
+                "momentum": 0.7,
+                "mean_reversion": 1.5,
+                "volume": 1.0,
+                "volatility": 1.2
+            },
+            "HIGH_VOLATILITY": {
+                "trend": 0.5,
+                "momentum": 0.6,
+                "mean_reversion": 1.2,
+                "volume": 1.3,
+                "volatility": 1.5  # Actually increase caution, but weight for filtering
+            },
+            "ACCUMULATION": {
+                "trend": 1.2,
+                "momentum": 1.1,
+                "mean_reversion": 0.8,
+                "volume": 1.4,
+                "volatility": 0.7
+            },
+            "DISTRIBUTION": {
+                "trend": 0.8,
+                "momentum": 0.9,
+                "mean_reversion": 1.1,
+                "volume": 1.3,
+                "volatility": 0.9
+            }
+        }
     
-    def analyze(self, df, levels=None):
-        signals = []
-        all_reasons = []
-        strategy_results = []
+    def detect(self, df):
+        """
+        Detect current market regime
+        Returns regime name and confidence
+        """
+        if df is None or df.empty or len(df) < 50:
+            return {"regime": "UNKNOWN", "confidence": 50}
         
-        for i, strategy in enumerate(self.strategies):
-            if self.strategy_names[i] == "Confidence Scoring":
-                signal, confidence, reasons = strategy.analyze(df, levels)
-            else:
-                signal, confidence, reasons = strategy.analyze(df)
-            
-            weighted_signal = signal * self.weights[i]
-            signals.append(weighted_signal)
-            all_reasons.extend(reasons[:2])
-            
-            strategy_results.append({
-                'name': self.strategy_names[i],
-                'signal': signal,
-                'confidence': confidence,
-                'reasons': reasons[:2]
-            })
+        latest = df.iloc[-1]
         
-        # Calculate weighted average
-        total_weight = sum(self.weights)
-        weighted_signal = sum(signals) / total_weight
+        # Get key indicators
+        ema20 = latest.get('EMA_20', df['Close'].iloc[-1])
+        ema50 = latest.get('EMA_50', df['Close'].iloc[-1])
+        price = df['Close'].iloc[-1]
         
-        # Calculate average confidence
-        avg_confidence = sum(r['confidence'] for r in strategy_results) / len(strategy_results)
+        # Calculate volatility
+        returns = df['Close'].pct_change().dropna()
+        volatility = returns.std() * np.sqrt(252) if len(returns) > 0 else 0.2
         
-        # Determine final signal
-        if weighted_signal > 0.3:
-            final_signal = 1
-        elif weighted_signal < -0.3:
-            final_signal = -1
+        # Calculate trend strength (using ADX or simple slope)
+        if 'ADX' in df.columns:
+            adx = df['ADX'].iloc[-1]
         else:
-            final_signal = 0
+            # Simple slope calculation
+            slope = (df['Close'].iloc[-1] - df['Close'].iloc[-20]) / df['Close'].iloc[-20] if len(df) >= 20 else 0
+            adx = 25 + abs(slope * 100)  # Rough estimate
         
-        # Boost confidence if multiple strategies agree
-        buy_count = sum(1 for r in strategy_results if r['signal'] == 1)
-        sell_count = sum(1 for r in strategy_results if r['signal'] == -1)
+        # Calculate volume trend
+        volume_ratio = latest.get('Volume_Ratio', 1.0)
+        obv_trend = 0
+        if 'OBV' in df.columns and len(df) >= 20:
+            obv_trend = (df['OBV'].iloc[-1] - df['OBV'].iloc[-20]) / (df['OBV'].iloc[-20] + 1)
         
-        if final_signal == 1 and buy_count >= 4:
-            avg_confidence = min(95, avg_confidence * 1.1)
-        elif final_signal == -1 and sell_count >= 4:
-            avg_confidence = min(95, avg_confidence * 1.1)
+        # RSI for accumulation/distribution
+        rsi = latest.get('RSI', 50)
         
-        # Determine action text
-        if final_signal == 1:
-            if avg_confidence >= 80:
-                action = "STRONG_BUY"
-            elif avg_confidence >= 65:
-                action = "BUY"
-            else:
-                action = "WEAK_BUY"
-        elif final_signal == -1:
-            if avg_confidence >= 80:
-                action = "STRONG_SELL"
-            elif avg_confidence >= 65:
-                action = "SELL"
-            else:
-                action = "WEAK_SELL"
+        # Determine regime
+        regime = "SIDEWAYS"
+        confidence = 70
+        
+        # Check volatility first
+        if volatility > 0.35:  # >35% annualized volatility
+            regime = "HIGH_VOLATILITY"
+            confidence = min(85, 70 + (volatility - 0.35) * 50)
+        
+        # Check trend direction with ADX
+        elif adx > 30:
+            if price > ema20 and ema20 > ema50:
+                regime = "TRENDING_BULL"
+                confidence = min(90, 70 + (adx - 30) * 1.5)
+            elif price < ema20 and ema20 < ema50:
+                regime = "TRENDING_BEAR"
+                confidence = min(90, 70 + (adx - 30) * 1.5)
+        
+        # Check accumulation/distribution
+        elif 40 <= rsi <= 60 and volume_ratio > 1.2 and obv_trend > 0:
+            regime = "ACCUMULATION"
+            confidence = 75
+        elif rsi > 70 and volume_ratio > 1.5 and obv_trend < 0:
+            regime = "DISTRIBUTION"
+            confidence = 75
+        
+        # Default: sideways market
         else:
-            action = "HOLD"
+            regime = "SIDEWAYS"
+            confidence = 65
         
         return {
-            'signal': final_signal,
-            'confidence': round(avg_confidence, 1),
-            'action': action,
-            'vote_summary': f"{buy_count}/6 strategies agree on BUY" if final_signal == 1 else f"{sell_count}/6 strategies agree on SELL",
-            'strategy_results': strategy_results,
-            'reasons': all_reasons[:6]
+            "regime": regime,
+            "confidence": min(95, confidence),
+            "adx": round(adx, 1),
+            "volatility": round(volatility * 100, 1),
+            "rsi": round(rsi, 1)
+        }
+    
+    def get_regime_weights(self, regime):
+        """Get adaptive weights for current regime"""
+        if regime in self.regime_weights:
+            return self.regime_weights[regime]
+        # Default weights
+        return {
+            "trend": 1.0,
+            "momentum": 1.0,
+            "mean_reversion": 1.0,
+            "volume": 1.0,
+            "volatility": 1.0
         }
 
 
 # ==========================================
-# PART 5: MARKET REGIME DETECTOR
+# SIMPLIFIED TRADING LOGIC (Math-Based)
+# ==========================================
+
+class MathTradingEngine:
+    """Adaptive quantitative trading engine"""
+    
+    def __init__(self):
+        self.regime_engine = MarketRegimeEngine()
+    
+    # ==========================================
+    # ADAPTIVE REGIME DETECTOR
+    # ==========================================
+    def detect_adaptive_regime(self, df):
+        """Detect market regime with adaptive parameters"""
+        
+        if df is None or df.empty or len(df) < 50:
+            return {
+                "regime": "UNKNOWN",
+                "confidence": 0,
+                "risk_level": "HIGH",
+                "strength": "WEAK",
+                "volatility": 0
+            }
+        
+        regime_data = self.regime_engine.detect(df)
+        
+        regime = regime_data.get("regime", "SIDEWAYS")
+        confidence = regime_data.get("confidence", 70)
+        
+        # Risk level based on regime
+        if regime in ["HIGH_VOLATILITY", "TRENDING_BEAR"]:
+            risk_level = "HIGH"
+        elif regime == "SIDEWAYS":
+            risk_level = "MEDIUM"
+        else:
+            risk_level = "LOW"
+        
+        # Strength (as percentage)
+        if confidence >= 80:
+            strength = 90
+        elif confidence >= 65:
+            strength = 70
+        elif confidence >= 50:
+            strength = 50
+        else:
+            strength = 30
+        
+        # Calculate volatility
+        returns = df['Close'].pct_change().dropna()
+        volatility_value = (
+            returns.std() * np.sqrt(252) * 100
+            if len(returns) > 0 else 0
+        )
+        
+        return {
+            "regime": regime,
+            "confidence": confidence,
+            "risk_level": risk_level,
+            "strength": strength,
+            "volatility": round(volatility_value, 2)
+        }
+    
+    # ==========================================
+    # MAIN ANALYSIS ENGINE
+    # ==========================================
+    def analyze(self, df):
+        """Main analysis with adaptive regime detection"""
+        
+        if df is None or df.empty or len(df) < 50:
+            return 0, 50, ["Insufficient data"]
+        
+        latest = df.iloc[-1]
+        
+        # ==========================================
+        # ADAPTIVE MARKET REGIME
+        # ==========================================
+        
+        regime_data = self.regime_engine.detect(df)
+        regime = regime_data["regime"]
+        
+        weights = self.regime_engine.get_regime_weights(regime)
+        
+        trend_weight = weights["trend"]
+        momentum_weight = weights["momentum"]
+        mean_reversion_weight = weights["mean_reversion"]
+        volume_weight = weights["volume"]
+        volatility_weight = weights["volatility"]
+        
+        # ==========================================
+        # INITIAL SCORE
+        # ==========================================
+        
+        score = 50
+        reasons = []
+        
+        reasons.append(f"Regime: {regime} ({regime_data['confidence']:.0f}%)")
+        
+        # ==========================================
+        # MATH MODEL 1:
+        # MEAN REVERSION
+        # ==========================================
+        
+        z_score = MathematicalModels.calculate_z_score(
+            latest['Close'],
+            df['Close'].tail(20).mean(),
+            df['Close'].tail(20).std()
+        )
+        
+        if z_score < -2:
+            boost = 20 * mean_reversion_weight
+            score += boost
+            reasons.append(f"Statistical overshoot (z={z_score:.2f}) +{boost:.0f}")
+        
+        elif z_score < -1:
+            boost = 10 * mean_reversion_weight
+            score += boost
+            reasons.append(f"Below mean (z={z_score:.2f}) +{boost:.0f}")
+        
+        elif z_score > 2:
+            penalty = 20 * mean_reversion_weight
+            score -= penalty
+            reasons.append(f"Statistical overbought (z={z_score:.2f}) -{penalty:.0f}")
+        
+        # ==========================================
+        # MATH MODEL 2:
+        # TREND ANALYSIS
+        # ==========================================
+        
+        ema_diff = (
+            latest['EMA_20'] - latest['EMA_50']
+        ) / latest['EMA_50']
+        
+        if ema_diff > 0.02:
+            boost = 15 * trend_weight
+            score += boost
+            reasons.append(f"Strong trend momentum +{boost:.0f}")
+        
+        elif ema_diff < -0.02:
+            penalty = 15 * trend_weight
+            score -= penalty
+            reasons.append(f"Strong downtrend -{penalty:.0f}")
+        
+        # ==========================================
+        # MATH MODEL 3:
+        # MOMENTUM ANALYSIS
+        # ==========================================
+        
+        macd_strength = abs(
+            latest['MACD']
+        ) / latest['Close']
+        
+        if macd_strength > 0.01 and latest['MACD'] > 0:
+            boost = 12 * momentum_weight
+            score += boost
+            reasons.append(f"Positive momentum +{boost:.0f}")
+        
+        elif macd_strength > 0.01 and latest['MACD'] < 0:
+            penalty = 12 * momentum_weight
+            score -= penalty
+            reasons.append(f"Negative momentum -{penalty:.0f}")
+        
+        # ==========================================
+        # MATH MODEL 4:
+        # VOLUME CONFIRMATION
+        # ==========================================
+        
+        if latest['Volume_Ratio'] > 1.5:
+            if score > 50:
+                boost = 10 * volume_weight
+                score += boost
+                reasons.append(f"Volume confirmation +{boost:.0f}")
+            else:
+                penalty = 10 * volume_weight
+                score -= penalty
+                reasons.append(f"Volume sell pressure -{penalty:.0f}")
+        
+        # ==========================================
+        # MATH MODEL 5:
+        # VOLATILITY FILTER
+        # ==========================================
+        
+        vol_percent = (
+            latest['ATR'] / latest['Close']
+        )
+        
+        if vol_percent > 0.03:
+            penalty = 5 * volatility_weight
+            score -= penalty
+            reasons.append(f"High volatility ({vol_percent:.1%}) -{penalty:.0f}")
+        
+        # ==========================================
+        # REGIME-SPECIFIC ADJUSTMENTS
+        # ==========================================
+        
+        if regime == "TRENDING_BULL":
+            score += 5
+            reasons.append("Bull regime boost +5")
+        
+        elif regime == "TRENDING_BEAR":
+            score -= 5
+            reasons.append("Bear regime penalty -5")
+        
+        elif regime == "SIDEWAYS":
+            if abs(z_score) > 1:
+                score += 5
+                reasons.append("Mean reversion favorable +5")
+        
+        elif regime == "HIGH_VOLATILITY":
+            score -= 8
+            reasons.append("Defensive mode active -8")
+        
+        elif regime == "ACCUMULATION":
+            score += 3
+            reasons.append("Accumulation detected +3")
+        
+        # ==========================================
+        # SCORE NORMALIZATION
+        # ==========================================
+        
+        adjusted_score = (
+            (score - 50) * 0.7
+        ) + 50
+        
+        adjusted_score = max(
+            5,
+            min(adjusted_score, 95)
+        )
+        
+        # ==========================================
+        # FINAL SIGNAL
+        # ==========================================
+        
+        if adjusted_score >= 65:
+            return (
+                1,
+                round(adjusted_score, 1),
+                reasons[:5]  # Limit to 5 reasons for display
+            )
+        
+        elif adjusted_score <= 35:
+            bearish_confidence = 100 - adjusted_score
+            return (
+                -1,
+                round(bearish_confidence, 1),
+                reasons[:5]
+            )
+        
+        else:
+            return (
+                0,
+                round(adjusted_score, 1),
+                reasons[:5]
+            )
+
+# ==========================================
+# RISK MANAGEMENT (Pure Math)
+# ==========================================
+
+class MathRiskManager:
+    """Mathematical position sizing"""
+    
+    def calculate_position_size(self, df, account_size=100000):
+        if df.empty or len(df) < 20:
+            return {
+                'entry': 0, 'stoploss': 0, 'target': 0, 
+                'position_size': 0, 'risk_reward': 0, 
+                'risk_amount': 0, 'reward_amount': 0,
+                'volatility': 'NORMAL', 'kelly_fraction': 0
+            }
+        
+        current_price = df["Close"].iloc[-1]
+        atr = df["ATR"].iloc[-1]
+        returns = df['Close'].pct_change().dropna()
+        
+        # Kelly Criterion for optimal sizing
+        win_rate = len(returns[returns > 0]) / len(returns) if len(returns) > 0 else 0.5
+        avg_win = returns[returns > 0].mean() if len(returns[returns > 0]) > 0 else 0.02
+        avg_loss = abs(returns[returns < 0].mean()) if len(returns[returns < 0]) > 0 else 0.01
+        
+        win_loss_ratio = avg_win / avg_loss if avg_loss > 0 else 1
+        kelly = MathematicalModels.calculate_kelly_criterion(win_rate, win_loss_ratio)
+        
+        # Conservative Kelly (use 25% of Kelly)
+        risk_percent = max(0.5, min(5, kelly * 0.25 * 100))
+        
+        # Position size based on ATR
+        stop_distance = atr * 1.5
+        position_size = (account_size * risk_percent / 100) / stop_distance if stop_distance > 0 else 0
+        
+        # Fibonacci levels for compatibility
+        recent_high = df["High"].tail(50).max()
+        recent_low = df["Low"].tail(50).min()
+        fib_range = recent_high - recent_low
+        
+        return {
+            'entry': round(current_price, 2),
+            'stoploss': round(current_price - stop_distance, 2),
+            'target': round(current_price + (stop_distance * 2), 2),
+            'position_size': round(position_size, 0),
+            'risk_reward': round(2.0, 2),  # Fixed 2:1 ratio
+            'risk_amount': round(stop_distance, 2),
+            'reward_amount': round(stop_distance * 2, 2),
+            'volatility': 'HIGH' if (atr / current_price) > 0.03 else 'LOW' if (atr / current_price) < 0.01 else 'NORMAL',
+            'kelly_fraction': round(kelly, 2),
+            'fib_382': round(recent_high - fib_range * 0.382, 2),
+            'fib_500': round(recent_high - fib_range * 0.5, 2),
+            'fib_618': round(recent_high - fib_range * 0.618, 2)
+        }
+
+
+# ==========================================
+# MARKET REGIME DETECTOR
 # ==========================================
 
 class MarketRegimeDetector:
-    """Detects current market conditions"""
+    """Simple market regime detection"""
     
     def detect(self, df):
         if df.empty or len(df) < 50:
             return "UNKNOWN"
         
-        adx = df['ADX'].iloc[-1] if 'ADX' in df.columns else 20
-        atr = df['ATR'].iloc[-1] if 'ATR' in df.columns else df['Close'].pct_change().std() * df['Close'].iloc[-1]
-        price = df['Close'].iloc[-1]
-        volatility_pct = (atr / price) * 100
-        
         ema20 = df['EMA_20'].iloc[-1] if 'EMA_20' in df.columns else df['Close'].iloc[-1]
         ema50 = df['EMA_50'].iloc[-1] if 'EMA_50' in df.columns else df['Close'].iloc[-1]
         
-        if volatility_pct > 5:
-            return "HIGH_VOLATILITY"
+        returns = df['Close'].pct_change().dropna()
+        volatility = returns.std() * np.sqrt(252) if len(returns) > 0 else 0
         
-        if adx > 25:
-            return "BULL_TRENDING" if ema20 > ema50 else "BEAR_FALLING"
+        if volatility > 0.3:
+            return "HIGH_VOLATILITY"
+        elif ema20 > ema50:
+            return "BULL_TRENDING"
+        elif ema20 < ema50:
+            return "BEAR_FALLING"
         else:
             return "SIDEWAYS_RANGING"
 
 
-# ==========================================
-# PART 6: RISK MANAGER
-# ==========================================
-
-class RiskManager:
-    """Professional risk management system"""
-    
-    def calculate_advanced_risk_levels(self, df, account_size=100000):
-        if df.empty or len(df) < 20:
-            return {}
-        
-        current_price = df["Close"].iloc[-1]
-        atr = df["ATR"].iloc[-1] if df["ATR"].iloc[-1] > 0 else current_price * 0.02
-        
-        volatility_multiplier = 1.0
-        if df["ATR"].iloc[-1] / current_price > 0.03:
-            volatility_multiplier = 1.3
-        elif df["ATR"].iloc[-1] / current_price < 0.01:
-            volatility_multiplier = 0.7
-        
-        support = df["Support_20"].iloc[-1]
-        resistance = df["Resistance_20"].iloc[-1]
-        
-        recent_high = df["High"].tail(50).max()
-        recent_low = df["Low"].tail(50).min()
-        fib_range = recent_high - recent_low
-        
-        if df["EMA_20"].iloc[-1] > df["EMA_50"].iloc[-1]:
-            entry = current_price
-        else:
-            entry = support * 1.005
-        
-        stoploss = entry - (atr * 2.5 * volatility_multiplier)
-        stoploss = max(stoploss, support * 0.97)
-        
-        if resistance > entry:
-            target = min(resistance * 0.99, entry + (atr * 5 * volatility_multiplier))
-        else:
-            target = entry + (atr * 4 * volatility_multiplier)
-        
-        risk = entry - stoploss
-        reward = target - entry
-        rr_ratio = reward / risk if risk > 0 else 0
-        
-        risk_percent = 2
-        position_size = (account_size * risk_percent / 100) / risk if risk > 0 else 0
-        
-        return {
-            "entry": round(entry, 2),
-            "stoploss": round(stoploss, 2),
-            "target": round(target, 2),
-            "support": round(support, 2),
-            "resistance": round(resistance, 2),
-            "atr": round(atr, 2),
-            "risk_reward": round(rr_ratio, 2),
-            "position_size": round(position_size, 0),
-            "risk_amount": round(risk, 2),
-            "reward_amount": round(reward, 2),
-            "volatility": "HIGH" if volatility_multiplier > 1 else "LOW" if volatility_multiplier < 0.8 else "NORMAL",
-            "fib_382": round(recent_high - fib_range * 0.382, 2),
-            "fib_500": round(recent_high - fib_range * 0.5, 2),
-            "fib_618": round(recent_high - fib_range * 0.618, 2)
-        }
-
 
 # ==========================================
-# PART 7: ADVANCED MATHEMATICS
+# ULTIMATE MATH BRAIN (FULLY COMPATIBLE)
 # ==========================================
 
-# ==========================================
-# PART 7: ADVANCED MATHEMATICS (updated)
-# ==========================================
-
-class QuantitativeMetrics:
-    """Advanced mathematical metrics — self-contained, no silent failures."""
-
-    def __init__(self):
-        from advanced_math import QuantitativeAI
-        self.quant = QuantitativeAI()
-
-    def calculate_win_probability(self, df, levels):
-        close_col = 'Close' if 'Close' in df.columns else 'close'
-
-        if df.empty or len(df) < 50:
-            return {
-                'win_probability': 50,
-                'expected_value': 0.0,
-                'sample_size': 0,
-                'verdict': 'NEUTRAL',
-                'message': 'Need more data for analysis'
-            }
-
-        current_indicators = {
-            'rsi':          df['RSI'].iloc[-1]          if 'RSI'          in df.columns else 50,
-            'ema_20':       df['EMA_20'].iloc[-1]       if 'EMA_20'       in df.columns else df[close_col].iloc[-1],
-            'ema_50':       df['EMA_50'].iloc[-1]       if 'EMA_50'       in df.columns else df[close_col].iloc[-1],
-            'volume_ratio': df['Volume_Ratio'].iloc[-1] if 'Volume_Ratio' in df.columns else 1.0,
-            'adx':          df['ADX'].iloc[-1]          if 'ADX'          in df.columns else 20,
-        }
-
-        win_prob, expected_value, sample_size = self.quant.calculate_win_probability(
-            df, current_indicators
-        )
-        risk_reward = levels.get('risk_reward', 1.5) if isinstance(levels, dict) else 1.5
-        verdict, message = self.quant.get_trade_verdict(win_prob, expected_value, risk_reward)
-
-        return {
-            'win_probability': round(win_prob, 1),
-            'expected_value':  round(expected_value, 2),
-            'sample_size':     sample_size,
-            'verdict':         verdict,
-            'message':         message,
-        }
-
-
-class MonteCarloSimulator:
-    """Monte Carlo simulation — GBM + fat tails + jump diffusion."""
-
-    def __init__(self):
-        from advanced_math import MonteCarloSimulator as MCSim
-        self.mc = MCSim()
-
-    def run_simulation(self, df, current_price, target, stoploss):
-        if df is None or df.empty or len(df) < 50:
-            return None
-        return self.mc.run_simulation(df, current_price, target, stoploss)
-
-# ==========================================
-# MULTI-TIMEFRAME ANALYSIS ENGINE
-# ==========================================
-
-class MultiTimeframeAnalyzer:
-    """
-    Advanced Multi-timeframe Analysis
-    Analyzes Weekly, Daily, and Hourly charts simultaneously
-    """
+class UltimateMathBrain:
+    """Pure math - minimal indicators - FULLY COMPATIBLE with app.py"""
     
     def __init__(self):
-        self.timeframes = {
-            'Weekly': {'days': 7, 'interval': '1wk', 'weight': 0.50},
-            'Daily': {'days': 1, 'interval': '1d', 'weight': 0.30},
-            'Hourly': {'days': 0.04167, 'interval': '1h', 'weight': 0.20}
-        }
-    
-    def fetch_multi_timeframe_data(self, symbol):
-        """Fetch data for all three timeframes"""
-        import yfinance as yf
-        from brain_ultimate import ultimate_brain  # Use existing instance
-        
-        tf_data = {}
-        
-        for tf_name, tf_config in self.timeframes.items():
-            try:
-                ticker = yf.Ticker(symbol)
-                data = ticker.history(period="6mo", interval=tf_config['interval'])
-                
-                if not data.empty and len(data) > 20:
-                    # Calculate indicators using the existing brain
-                    data = ultimate_brain.calculate_all_indicators(data)
-                    tf_data[tf_name] = data
-                else:
-                    tf_data[tf_name] = None
-            except Exception as e:
-                tf_data[tf_name] = None
-        
-        return tf_data
-    
-    def analyze_timeframe(self, df, timeframe_name):
-        """Analyze a single timeframe and return score and direction"""
-        if df is None or df.empty or len(df) < 20:
-            return {'score': 50, 'direction': 'NEUTRAL', 'confidence': 50, 'reasons': []}
-        
-        latest = df.iloc[-1]
-        prev = df.iloc[-2] if len(df) > 1 else latest
-        score = 50
-        reasons = []
-        
-        # 1. Trend Analysis (30% weight)
-        ema20 = latest.get('EMA_20', latest['Close'])
-        ema50 = latest.get('EMA_50', latest['Close'])
-        price = latest['Close']
-        
-        if price > ema20 > ema50:
-            score += 15
-            reasons.append(f"Perfect bullish alignment on {timeframe_name}")
-        elif price > ema20:
-            score += 8
-            reasons.append(f"Price above EMA20 on {timeframe_name}")
-        elif price < ema20 < ema50:
-            score -= 15
-            reasons.append(f"Bearish alignment on {timeframe_name}")
-        elif price < ema20:
-            score -= 8
-            reasons.append(f"Price below EMA20 on {timeframe_name}")
-        
-        # 2. MACD Analysis (25% weight)
-        if 'MACD' in df.columns and 'Signal_Line' in df.columns:
-            macd = latest['MACD']
-            signal = latest['Signal_Line']
-            if macd > signal:
-                score += 12
-                reasons.append(f"MACD bullish on {timeframe_name}")
-            else:
-                score -= 12
-                reasons.append(f"MACD bearish on {timeframe_name}")
-        
-        # 3. RSI Analysis (20% weight)
-        rsi = latest.get('RSI', 50)
-        if rsi < 30:
-            score += 10
-            reasons.append(f"RSI oversold on {timeframe_name} ({rsi:.0f})")
-        elif rsi > 70:
-            score -= 10
-            reasons.append(f"RSI overbought on {timeframe_name} ({rsi:.0f})")
-        
-        # 4. ADX Trend Strength (15% weight)
-        adx = latest.get('ADX', 20)
-        if adx > 30:
-            if score > 50:
-                score += 8
-                reasons.append(f"Strong trend on {timeframe_name} (ADX {adx:.0f})")
-        elif adx < 20:
-            if score < 50:
-                score -= 5
-        
-        # 5. Volume Confirmation (10% weight)
-        volume_ratio = latest.get('Volume_Ratio', 1)
-        if volume_ratio > 1.5:
-            if score > 50:
-                score += 5
-                reasons.append(f"High volume on {timeframe_name}")
-        
-        # Determine direction and confidence
-        if score >= 70:
-            direction = "BULLISH"
-            symbol = "📈"
-            confidence = min(95, score)
-        elif score >= 60:
-            direction = "BULLISH"
-            symbol = "📈"
-            confidence = score
-        elif score <= 30:
-            direction = "BEARISH"
-            symbol = "📉"
-            confidence = min(95, 100 - score)
-        elif score <= 40:
-            direction = "BEARISH"
-            symbol = "📉"
-            confidence = 100 - score
-        else:
-            direction = "NEUTRAL"
-            symbol = "🔄"
-            confidence = 50
-        
-        return {
-            'score': score,
-            'direction': direction,
-            'symbol': symbol,
-            'confidence': round(confidence, 1),
-            'reasons': reasons[:2]
-        }
-    
-    def get_unified_signal(self, symbol):
-        """Get unified signal from all timeframes"""
-        tf_data = self.fetch_multi_timeframe_data(symbol)
-        
-        results = {}
-        total_score = 0
-        total_weight = 0
-        
-        for tf_name, config in self.timeframes.items():
-            df = tf_data.get(tf_name)
-            analysis = self.analyze_timeframe(df, tf_name)
-            results[tf_name] = analysis
-            
-            weight = config['weight']
-            total_score += analysis['score'] * weight
-            total_weight += weight
-        
-        final_score = total_score / total_weight if total_weight > 0 else 50
-        final_score = max(0, min(100, final_score))
-        
-        # Determine final action
-        if final_score >= 70:
-            final_action = "STRONG BUY"
-            action_color = "#00ff88"
-            action_icon = "✅"
-        elif final_score >= 60:
-            final_action = "BUY"
-            action_color = "#00e676"
-            action_icon = "📈"
-        elif final_score <= 30:
-            final_action = "STRONG SELL"
-            action_color = "#ff1744"
-            action_icon = "❌"
-        elif final_score <= 40:
-            final_action = "SELL"
-            action_color = "#ff5252"
-            action_icon = "📉"
-        else:
-            final_action = "HOLD"
-            action_color = "#ffd700"
-            action_icon = "⚠️"
-        
-        # Count how many timeframes agree
-        bullish_count = sum(1 for r in results.values() if r['direction'] == 'BULLISH')
-        bearish_count = sum(1 for r in results.values() if r['direction'] == 'BEARISH')
-        
-        return {
-            'final_score': round(final_score, 1),
-            'final_action': final_action,
-            'action_color': action_color,
-            'action_icon': action_icon,
-            'agreement': f"{bullish_count}/3 bullish" if bullish_count > bearish_count else f"{bearish_count}/3 bearish",
-            'timeframes': results,
-            'bullish_count': bullish_count,
-            'bearish_count': bearish_count
-        }
-
-
-
-
-# ==========================================
-# PART 8: ULTIMATE TRADING BRAIN (Main Class)
-# ==========================================
-
-class UltimateTradingBrain:
-    """
-    THE ULTIMATE TRADING BRAIN
-    - 6 strategies voting together
-    - Advanced mathematics
-    - Professional risk management
-    """
-    
-    def __init__(self):
-        self.indicators = IndicatorsEngine()
-        self.ensemble = EnsembleVoting()
+        self.indicators = SimplifiedIndicators()
+        self.trading_engine = MathTradingEngine()
+        self.risk_manager = MathRiskManager()
         self.regime_detector = MarketRegimeDetector()
-        self.risk_manager = RiskManager()
-        self.quant_metrics = QuantitativeMetrics()
-        self.monte_carlo = MonteCarloSimulator()
-        self.kalman_filter = KalmanFilter()
+        
+        # NEW ADAPTIVE QUANT ENGINE
+        self.math_engine = MathTradingEngine()
+        
+        # ==========================================
+        # QUANT MODELS INITIALIZATION
+        # ==========================================
+        self.quant_models = AdvancedQuantModels()  
+    
+    # ==========================================
+    # QUANTITATIVE ANALYSIS METHODS
+    # ==========================================
+    
+    def get_quant_analysis(self, df):
+        """
+        Complete quantitative analysis for a stock
+        Returns all advanced quant metrics
+        """
+        if df is None or df.empty or len(df) < 50:
+            return {
+                'error': 'Insufficient data for quant analysis',
+                'hurst': {'value': 0.5, 'regime': 'UNKNOWN'},
+                'entropy': {'score': 50, 'regime': 'UNKNOWN'},
+                'z_score': {'value': 0, 'signal': 'NEUTRAL'},
+                'bayesian': {'up_probability': 50, 'info_gain': 0},
+                'risk_metrics': {'sharpe': 0, 'sortino': 0, 'omega': 0},
+                'drawdown': {'max_drawdown': 0, 'current_drawdown': 0},
+                'var': {'var_95': 0, 'daily_var_rupees': 0},
+                'monte_carlo': None,
+                'composite_score': 50
+            }
+        
+        prices = df['Close']
+        returns = prices.pct_change().dropna()
+        
+        # 1. Hurst Exponent
+        hurst = self.quant_models.calculate_hurst_exponent(prices.values[-100:])
+        hurst_interpret = self.quant_models.interpret_hurst(hurst)
+        
+        # 2. Shannon Entropy
+        entropy_score, raw_entropy = self.quant_models.calculate_shannon_entropy(returns)
+        entropy_interpret = self.quant_models.interpret_entropy(entropy_score)
+        
+        # 3. Bayesian Probability
+        bayesian_prob, info_gain = self.quant_models.calculate_bayesian_up_probability(returns)
+        
+        # 4. Z-Score
+        z_scores = self.quant_models.calculate_z_score(prices)
+        current_z = z_scores.iloc[-1] if len(z_scores) > 0 else 0
+        z_interpret = self.quant_models.interpret_z_score(current_z)
+        
+        # 5. Risk Metrics
+        risk_metrics = self.quant_models.calculate_risk_metrics(returns)
+        
+        # 6. Drawdown Metrics
+        drawdown = self.quant_models.calculate_drawdown_metrics(prices.values)
+        
+        # 7. Value at Risk
+        var = self.quant_models.calculate_var_cvar(returns)
+        
+        # 8. Monte Carlo Simulation
+        monte_carlo = self.quant_models.monte_carlo_simulation(prices)
+        
+        # 9. Composite Score
+        composite_score = self.quant_models.calculate_composite_quant_score(
+            hurst, entropy_score, risk_metrics['sharpe'], current_z
+        )
+        
+        return {
+            'hurst': {
+                'value': round(hurst, 3),
+                'regime': hurst_interpret['regime'],
+                'color': hurst_interpret['color'],
+                'icon': hurst_interpret['icon'],
+                'action': hurst_interpret['action'],
+                'confidence': hurst_interpret['confidence']
+            },
+            'entropy': {
+                'score': round(entropy_score, 1),
+                'regime': entropy_interpret['regime'],
+                'color': entropy_interpret['color'],
+                'icon': entropy_interpret['icon'],
+                'action': entropy_interpret['action'],
+                'risk': entropy_interpret['risk']
+            },
+            'z_score': {
+                'value': round(current_z, 2),
+                'signal': z_interpret['signal'],
+                'color': z_interpret['color'],
+                'icon': z_interpret['icon'],
+                'action': z_interpret['action'],
+                'confidence': z_interpret['confidence']
+            },
+            'bayesian': {
+                'up_probability': round(bayesian_prob, 1),
+                'info_gain': round(info_gain, 1),
+                'bias': 'BULLISH' if bayesian_prob >= 60 else 'BEARISH' if bayesian_prob <= 40 else 'NEUTRAL'
+            },
+            'risk_metrics': {
+                'sharpe': risk_metrics['sharpe'],
+                'sharpe_grade': self.quant_models.interpret_sharpe(risk_metrics['sharpe'])['grade'],
+                'sharpe_color': self.quant_models.interpret_sharpe(risk_metrics['sharpe'])['color'],
+                'sortino': risk_metrics['sortino'],
+                'omega': risk_metrics['omega']
+            },
+            'drawdown': {
+                'max_drawdown': round(drawdown['max_drawdown'], 1),
+                'current_drawdown': round(drawdown['current_drawdown'], 1),
+                'avg_recovery_days': drawdown['avg_recovery_days'],
+                'ulcer_index': drawdown['ulcer_index']
+            },
+            'var': {
+                'var_95': var['var_95'],
+                'cvar_95': var['cvar_95'],
+                'var_99': var['var_99'],
+                'daily_var_rupees': var['daily_var_rupees']
+            },
+            'monte_carlo': monte_carlo,
+            'composite_score': round(composite_score, 1)
+        }
+    
+    
+    
     
     def calculate_all_indicators(self, df):
-        """Calculate all indicators with Kalman smoothing"""
-        df = self.indicators.calculate_all(df)
-        return self._apply_kalman(df)
+        """Calculate only essential indicators"""
+        if df is None:
+            return pd.DataFrame()
+        return self.indicators.calculate_all(df)
     
-    def _apply_kalman(self, df):
-        """Apply Kalman filter for noise reduction"""
-        if df.empty or len(df) < 10:
-            return df
-        
-        filtered_df = df.copy()
-        
-        price_filter = KalmanFilter()
-        filtered_df['Close_Kalman'] = price_filter.filter_series(df['Close'].values)
-        
-        if 'RSI' in df.columns:
-            rsi_filter = KalmanFilter(process_variance=1e-2, measurement_variance=1e-1)
-            filtered_df['RSI_Kalman'] = rsi_filter.filter_series(df['RSI'].values)
-        
-        return filtered_df
-    
-    def get_ensemble_analysis(self, df, levels=None):
-        """Get analysis from all 6 strategies"""
-        return self.ensemble.analyze(df, levels)
     
     def generate_smart_signals(self, df):
-        """Generate signals for backtesting compatibility"""
-        result = self.ensemble.analyze(df)
+        """Math-based signals - returns 6 values expected by app.py"""
+        if df is None or df.empty:
+            return pd.DataFrame(), pd.DataFrame(), 50, "NEUTRAL", 50, 30
         
-        buy_signals = []
-        sell_signals = []
+        signal, confidence, reasons = self.trading_engine.analyze(df)
         
-        if result['signal'] == 1:
-            latest = df.iloc[-1]
-            buy_signals.append({
+        buy_signals = pd.DataFrame()
+        sell_signals = pd.DataFrame()
+        
+        if signal == 1:
+            buy_signals = pd.DataFrame([{
                 'index': df.index[-1],
-                'Close': latest['Close'],
-                'Score': result['confidence'],
-                'Confidence': 'HIGH' if result['confidence'] >= 70 else 'MEDIUM',
-                'Reasons': result['reasons'][:3]
-            })
-        elif result['signal'] == -1:
-            latest = df.iloc[-1]
-            sell_signals.append({
+                'Close': df['Close'].iloc[-1],
+                'Score': confidence,
+                'Confidence': 'HIGH' if confidence >= 70 else 'MEDIUM',
+                'Reasons': reasons
+            }])
+            buy_signals.set_index("index", inplace=True)
+        
+        elif signal == -1:
+            sell_signals = pd.DataFrame([{
                 'index': df.index[-1],
-                'Close': latest['Close'],
-                'Score': result['confidence'],
-                'Confidence': 'HIGH' if result['confidence'] >= 70 else 'MEDIUM',
-                'Reasons': result['reasons'][:3]
-            })
+                'Close': df['Close'].iloc[-1],
+                'Score': confidence,
+                'Confidence': 'HIGH' if confidence >= 70 else 'MEDIUM',
+                'Reasons': reasons
+            }])
+            sell_signals.set_index("index", inplace=True)
         
-        buy_df = pd.DataFrame(buy_signals)
-        sell_df = pd.DataFrame(sell_signals)
+        overall_sentiment = "BULLISH" if signal == 1 else "BEARISH" if signal == -1 else "NEUTRAL"
+        risk_score = 30
         
-        if not buy_df.empty:
-            buy_df.set_index("index", inplace=True)
-        if not sell_df.empty:
-            sell_df.set_index("index", inplace=True)
-        
-        return buy_df, sell_df, result['confidence'], result['action'], result['confidence'], 30
+        return buy_signals, sell_signals, confidence, overall_sentiment, confidence, risk_score
+    
+    
+    def get_signal_from_brain(self, df, levels=None):
+        """
+        Backtest-compatible signal generator
+        Returns:
+            1  = BUY
+            -1 = SELL
+            0  = HOLD
+        """
+
+        if df is None or df.empty or len(df) < 50:
+            return 0
+
+        try:
+            signal, confidence, reasons = self.trading_engine.analyze(df)
+
+            # Strong signal filtering
+            if confidence >= 65:
+                return signal
+
+            return 0
+
+        except Exception:
+            return 0
+    
+    
     
     def calculate_advanced_risk_levels(self, df, account_size=100000):
-        return self.risk_manager.calculate_advanced_risk_levels(df, account_size)
+        """Math-based risk management"""
+        if df is None or df.empty:
+            return {}
+        return self.risk_manager.calculate_position_size(df, account_size)
+    
     
     def generate_actionable_insights(self, df, levels, buy_signals, sell_signals):
+        """Math-based insights"""
         insights = []
         
-        if df.empty or len(df) < 20:
-            return ["Waiting for sufficient data..."]
+        if df is None or df.empty or len(df) < 20:
+            return ["Calculating mathematical probabilities..."]
         
         latest = df.iloc[-1]
+        returns = df['Close'].pct_change().tail(50).dropna()
         
-        if latest["EMA_20"] > latest["EMA_50"]:
-            if latest["Close"] > latest["EMA_20"]:
-                insights.append("📈 **Uptrend Active** - Price is rising. Good time to buy.")
-            else:
-                insights.append("📈 **Uptrend Pausing** - Price is cooling off. Wait for bounce back.")
-        else:
-            if latest["Close"] < latest["EMA_20"]:
-                insights.append("📉 **Downtrend Active** - Price is falling. Avoid buying.")
-            else:
-                insights.append("📉 **Attempting Recovery** - Price trying to rise. Wait for confirmation.")
+        mc_prob = MathematicalModels.calculate_monte_carlo_probability(df)
+        sharpe = MathematicalModels.calculate_sharpe_ratio(returns)
+        win_rate = len(returns[returns > 0]) / len(returns) if len(returns) > 0 else 0.5
+        expected_return = returns.mean() * 252 if len(returns) > 0 else 0
         
-        if latest["RSI"] < 30:
-            insights.append(f"🟢 **Oversold Zone** - RSI at {latest['RSI']:.0f}. Stock may bounce up soon.")
-        elif latest["RSI"] > 70:
-            insights.append(f"🔴 **Overbought Zone** - RSI at {latest['RSI']:.0f}. Profit booking likely.")
-        else:
-            insights.append(f"🟡 **Neutral Zone** - RSI at {latest['RSI']:.0f}. Wait for clearer direction.")
+        insights.append(f"📊 **Monte Carlo Win Probability**: {mc_prob:.0f}%")
+        insights.append(f"📈 **Sharpe Ratio**: {sharpe:.2f}")
+        insights.append(f"💰 **Expected Annual Return**: {expected_return:.1%}")
         
-        if latest["Volume_Ratio"] > 1.5:
-            if latest["Close"] > df["Close"].iloc[-2]:
-                insights.append(f"📊 **Bullish Volume Surge** - {latest['Volume_Ratio']:.1f}x normal volume.")
-            else:
-                insights.append(f"⚠️ **Bearish Volume Surge** - {latest['Volume_Ratio']:.1f}x normal volume.")
-        
-        if latest["ADX"] > 25:
-            direction = "BULLISH" if latest["EMA_20"] > latest["EMA_50"] else "BEARISH"
-            insights.append(f"💪 **Strong Trend** - ADX at {latest['ADX']:.0f}. {direction} momentum strong.")
-        else:
-            insights.append(f"🔄 **Range Bound** - ADX at {latest['ADX']:.0f}. No strong trend.")
+        rsi = latest.get('RSI', 50)
+        if rsi < 30:
+            insights.append(f"🟢 **Oversold** - RSI at {rsi:.0f}")
+        elif rsi > 70:
+            insights.append(f"🔴 **Overbought** - RSI at {rsi:.0f}")
         
         if levels:
-            rr = levels.get('risk_reward', 0)
-            if rr >= 2:
-                insights.append(f"✅ **Excellent Risk-Reward** - 1:{rr:.1f}. Favorable for entry.")
-            elif rr < 1:
-                insights.append(f"⚠️ **Poor Risk-Reward** - 1:{rr:.1f}. Skip this trade.")
-            insights.append(f"💰 **Recommended Quantity** - {levels['position_size']:.0f} shares (2% risk model)")
+            insights.append(f"💰 **Position**: {levels.get('position_size', 0):.0f} shares")
+            insights.append(f"🎯 **Target**: ₹{levels.get('target', 0):.2f}")
         
         return insights[:6]
     
-    def get_trading_recommendation(self, overall, confidence, risk_score, levels):
+    #==========================================
+    # ENSEMBLE ANALYSIS (FIXED)
+    #==========================================
+    def get_ensemble_analysis(self, df, levels=None):
+        """Ensemble analysis for compatibility"""
+        # Handle None case
+        if df is None:
+            # Return default values without analyzing
+            return {
+                'signal': 0,
+                'confidence': 50,
+                'action': 'HOLD',
+                'vote_summary': 'Waiting for data',
+                'strategy_results': []
+            }
+        
+        signal, confidence, reasons = self.trading_engine.analyze(df)
+        
+        if signal == 1:
+            action = "STRONG_BUY" if confidence >= 75 else "BUY"
+        elif signal == -1:
+            action = "STRONG_SELL" if confidence >= 75 else "SELL"
+        else:
+            action = "HOLD"
+        
+        strategy_results = [
+            {'name': 'Math Engine', 'signal': signal, 'confidence': confidence, 'reasons': reasons[:2]}
+        ]
+        
+        return {
+            'signal': signal,
+            'confidence': confidence,
+            'action': action,
+            'vote_summary': f"Confidence: {confidence:.0f}%",
+            'strategy_results': strategy_results
+        }
+    
+    
+    #==========================================
+        # TRADING RECOMMENDATION (FIXED)
+    #==========================================    
+    def get_trading_recommendation(self, overall_sentiment, confidence, risk_score, levels):
+        """Get trading recommendation - FIXED: No None passed to get_ensemble_analysis"""
         if not levels:
             return "HOLD", 50
         
-        if "BUY" in overall and risk_score < 50 and levels["risk_reward"] >= 1.5:
-            return "BUY", confidence
-        elif "SELL" in overall and risk_score < 50:
+        # Determine signal from sentiment instead of calling get_ensemble_analysis with None
+        signal = 0
+        
+        # Try to determine signal from sentiment
+        sentiment_str = str(overall_sentiment).upper()
+        if "BUY" in sentiment_str:
+            signal = 1
+        elif "SELL" in sentiment_str or "BEARISH" in sentiment_str:
+            signal = -1
+        
+        # Also check confidence level
+        if confidence >= 70 and signal == 1:
+            signal = 1
+        elif confidence >= 70 and signal == -1:
+            signal = -1
+        
+        rr = levels.get('risk_reward', 0)
+        
+        if signal == 1 and risk_score < 50:
+            if rr >= 1.5:
+                return "BUY", min(confidence, 85)
+            elif rr >= 1:
+                return "BUY", min(confidence, 70)
+            else:
+                return "CONSIDER", 60
+        elif signal == -1:
             return "AVOID", confidence
+        elif "BULLISH" in sentiment_str and risk_score < 50:
+            return "CONSIDER", 60
         else:
-            return "HOLD", 40
+            return "HOLD", 50
     
-    def run_monte_carlo_simulation(self, df, current_price, target, stoploss):
-        return self.monte_carlo.run_simulation(df, current_price, target, stoploss)
     
+    #=======================================  
+    # MUTI-TIMEFRAME ANALYSIS 
+    #=========================================
+    def get_multi_timeframe_analysis(self, data_dict):
+        """
+        PROFESSIONAL MULTI-TIMEFRAME ANALYSIS
+        """
+
+        if not data_dict:
+            return {
+                'final_action': 'HOLD',
+                'action_color': '#ffd700',
+                'agreement': '0/3',
+                'final_score': 50,
+                'timeframes': {}
+            }
+
+        results = {}
+
+        # ==========================================
+        # ANALYZE EACH TIMEFRAME
+        # ==========================================
+
+        for timeframe, df in data_dict.items():
+
+            if df is None or df.empty or len(df) < 50:
+                results[timeframe] = {
+                    'direction': 'NEUTRAL',
+                    'symbol': '🟡',
+                    'confidence': 25,
+                    'score': 0,
+                    'reasons': ['Insufficient data']
+                }
+                continue
+
+            latest = df.iloc[-1]
+
+            score = 0
+            reasons = []
+
+            # ==========================================
+            # TREND ANALYSIS
+            # ==========================================
+
+            ema20 = latest.get("EMA_20", latest["Close"])
+            ema50 = latest.get("EMA_50", latest["Close"])
+            ema200 = latest.get("EMA_200", latest["Close"])
+            price = latest["Close"]
+
+            if price > ema20 > ema50 > ema200:
+                score += 40
+                reasons.append("Strong bullish trend")
+
+            elif price > ema20 > ema50:
+                score += 25
+                reasons.append("Bullish momentum")
+
+            elif price < ema20 < ema50 < ema200:
+                score -= 40
+                reasons.append("Strong bearish trend")
+
+            elif price < ema20 < ema50:
+                score -= 25
+                reasons.append("Bearish momentum")
+
+            # ==========================================
+            # RSI
+            # ==========================================
+
+            rsi = latest.get("RSI", 50)
+
+            if 55 <= rsi <= 70:
+                score += 15
+                reasons.append("Healthy bullish RSI")
+
+            elif rsi > 75:
+                score -= 10
+                reasons.append("Overbought")
+
+            elif 30 <= rsi <= 45:
+                score -= 15
+                reasons.append("Weak momentum")
+
+            elif rsi < 25:
+                score += 10
+                reasons.append("Oversold bounce")
+
+            # ==========================================
+            # MACD
+            # ==========================================
+
+            macd = latest.get("MACD", 0)
+            signal = latest.get("Signal_Line", 0)
+
+            if macd > signal:
+                score += 15
+                reasons.append("MACD bullish")
+
+            elif macd < signal:
+                score -= 15
+                reasons.append("MACD bearish")
+
+            # ==========================================
+            # VOLUME
+            # ==========================================
+
+            vol_ratio = latest.get("Volume_Ratio", 1)
+
+            if vol_ratio > 1.5:
+
+                if score > 0:
+                    score += 10
+                    reasons.append("Strong buying volume")
+
+                else:
+                    score -= 10
+                    reasons.append("Strong selling volume")
+
+            # ==========================================
+            # VOLATILITY
+            # ==========================================
+
+            atr = latest.get("ATR", 0)
+
+            if price > 0:
+
+                volatility = atr / price
+
+                if volatility > 0.04:
+                    score -= 5
+                    reasons.append("High volatility")
+
+            # ==========================================
+            # FINAL TIMEFRAME RESULT
+            # ==========================================
+
+            confidence = min(max(abs(score), 40), 95)
+
+            if score >= 35:
+
+                direction = "BULLISH"
+                symbol = "🟢"
+
+            elif score <= -35:
+
+                direction = "BEARISH"
+                symbol = "🔴"
+
+            else:
+
+                direction = "NEUTRAL"
+                symbol = "🟡"
+
+            results[timeframe] = {
+                'direction': direction,
+                'symbol': symbol,
+                'confidence': confidence,
+                'score': score,
+                'reasons': reasons[:3]
+            }
+
+        # ==========================================
+        # FINAL ANALYSIS
+        # ==========================================
+
+        bullish_count = sum(
+            1 for tf in results.values()
+            if tf['direction'] == 'BULLISH'
+        )
+
+        bearish_count = sum(
+            1 for tf in results.values()
+            if tf['direction'] == 'BEARISH'
+        )
+
+        avg_confidence = np.mean([
+            tf['confidence'] for tf in results.values()
+        ])
+
+        weekly_score = results.get('Weekly', {}).get('score', 0) * 0.50
+        daily_score = results.get('Daily', {}).get('score', 0) * 0.35
+        hourly_score = results.get('Hourly', {}).get('score', 0) * 0.15
+
+        total_score = weekly_score + daily_score + hourly_score
+
+        # ==========================================
+        # FINAL ACTION
+        # ==========================================
+
+        if bullish_count >= 2 and total_score > 20:
+
+            final_action = (
+                "STRONG BUY"
+                if avg_confidence >= 75
+                else "BUY"
+            )
+
+            action_color = "#00ff88"
+
+        elif bearish_count >= 2 and total_score < -20:
+
+            final_action = (
+                "STRONG SELL"
+                if avg_confidence >= 75
+                else "SELL"
+            )
+
+            action_color = "#ff1744"
+
+        else:
+
+            final_action = "HOLD"
+            action_color = "#ffd700"
+
+        # ==========================================
+        # AGREEMENT
+        # ==========================================
+
+        if bullish_count == 3 or bearish_count == 3:
+
+            agreement = "3/3"
+
+        elif bullish_count == 2 or bearish_count == 2:
+
+            agreement = "2/3"
+
+        else:
+
+            agreement = "Mixed"
+
+        return {
+            'final_action': final_action,
+            'action_color': action_color,
+            'agreement': agreement,
+            'final_score': round(avg_confidence, 1),
+            'timeframes': results
+        }
+      
+      
+      
+    #==========================================
+    # QUANTITATIVE METRICS FOR COMPATIBILITY
+    #==========================================   
     def calculate_quantitative_metrics(self, df, levels):
-        return self.quant_metrics.calculate_win_probability(df, levels)
+        """Quantitative metrics for compatibility"""
+        if df is None or df.empty or len(df) < 50:
+            return {
+                'win_probability': 50,
+                'expected_value': 0,
+                'sample_size': 0,
+                'verdict': 'NEUTRAL',
+                'message': 'Need more data'
+            }
+        
+        returns = df['Close'].pct_change().dropna()
+        win_rate = len(returns[returns > 0]) / len(returns) if len(returns) > 0 else 0.5
+        avg_win = returns[returns > 0].mean() if len(returns[returns > 0]) > 0 else 0.02
+        avg_loss = abs(returns[returns < 0].mean()) if len(returns[returns < 0]) > 0 else 0.01
+        
+        expected_value = (win_rate * avg_win) - ((1 - win_rate) * avg_loss)
+        
+        if win_rate >= 0.6:
+            verdict = "STRONG BUY"
+            message = "High probability setup"
+        elif win_rate >= 0.55:
+            verdict = "BUY"
+            message = "Good probability"
+        elif win_rate >= 0.45:
+            verdict = "CONSIDER"
+            message = "Wait for confirmation"
+        else:
+            verdict = "AVOID"
+            message = "Poor risk-reward"
+        
+        return {
+            'win_probability': round(win_rate * 100, 1),
+            'expected_value': round(expected_value * 100, 2),
+            'sample_size': len(returns),
+            'verdict': verdict,
+            'message': message
+        }
     
-    def get_signal_from_brain(self, df, levels=None):
-        """Simple signal for compatibility"""
-        result = self.ensemble.analyze(df, levels)
-        return result['signal']
+    # ==========================================
+    # MONTE CARLO SIMULATION (PROFESSIONAL VERSION)
+    # ==========================================
+    def run_monte_carlo_simulation(self, df, current_price, target, stoploss):
 
-    # Add to UltimateTradingBrain class
-    def get_multi_timeframe_analysis(self, symbol):
-        """Get multi-timeframe analysis for a stock"""
-        analyzer = MultiTimeframeAnalyzer()
-        return analyzer.get_unified_signal(symbol)
+        if df is None or df.empty or len(df) < 100:
+            return None
 
+        returns = df['Close'].pct_change().dropna()
 
+        if len(returns) < 30:
+            return None
+
+        mean_return = returns.mean()
+        std_return = returns.std()
+
+        n_simulations = 5000
+        n_days = 30
+
+        target_hits = 0
+        stop_hits = 0
+
+        final_prices = []
+
+        for _ in range(n_simulations):
+
+            simulated_price = current_price
+
+            hit_target = False
+            hit_stop = False
+
+            for _ in range(n_days):
+
+                daily_return = np.random.normal(
+                    mean_return,
+                    std_return
+                )
+
+                simulated_price *= (1 + daily_return)
+
+                # TARGET HIT
+                if simulated_price >= target:
+                    target_hits += 1
+                    hit_target = True
+                    break
+
+                # STOPLOSS HIT
+                if simulated_price <= stoploss:
+                    stop_hits += 1
+                    hit_stop = True
+                    break
+
+            final_prices.append(simulated_price)
+
+        prob_target = (target_hits / n_simulations) * 100
+        prob_stop = (stop_hits / n_simulations) * 100
+
+        expected_return = (
+            (np.mean(final_prices) - current_price)
+            / current_price
+        ) * 100
+
+        sharpe = (
+            returns.mean() / returns.std() * np.sqrt(252)
+            if returns.std() > 0 else 0
+        )
+
+        return {
+            'prob_target': round(prob_target, 1),
+            'prob_stoploss': round(prob_stop, 1),
+            'mean_return': round(expected_return, 1),
+            'sharpe': round(sharpe, 2),
+            'n_paths': n_simulations,
+            'price_percentiles': {
+                'p95': round(np.percentile(final_prices, 95), 2),
+                'p50': round(np.percentile(final_prices, 50), 2),
+                'p5': round(np.percentile(final_prices, 5), 2),
+            }
+        }
 
 # ==========================================
 # SINGLETON INSTANCE
 # ==========================================
-ultimate_brain = UltimateTradingBrain()
+ultimate_brain = UltimateMathBrain()
