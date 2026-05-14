@@ -748,6 +748,21 @@ if st.session_state.get("watchlist_clicked_stock"):
     st.session_state.watchlist_clicked_name = None
 
 # ==========================================
+# FIX: Force chart refresh on stock change
+# ==========================================
+
+# Track previous stock to detect changes
+if 'previous_stock' not in st.session_state:
+    st.session_state.previous_stock = None
+
+
+    # Reset chart initialization flag
+    if 'chart_initialized' in st.session_state:
+        st.session_state.chart_initialized = False
+    # Update previous stock
+    st.session_state.previous_stock = stock
+
+# ==========================================
 # VALIDATE STOCK SELECTION
 # ==========================================
 if not stock:
@@ -759,20 +774,28 @@ if not stock:
 interval = TIMEFRAMES[DEFAULT_TIMEFRAME]["interval"]
 period = TIMEFRAMES[DEFAULT_TIMEFRAME]["period"]
 
+# Create placeholder for data loading
+data_placeholder = st.empty()
+
 with st.spinner("📡 Fetching market data and analyzing..."):
     data = fetch_stock_data(stock, period, interval)
     
+    # Show progress while loading
+    if data.empty:
+        data_placeholder.warning(f"⏳ Loading data for {stock}... Please wait or refresh.")
+        time.sleep(1)
+        st.rerun()  # Retry
 
 if data.empty:
     st.error(f"⚠️ No data available for {stock}")
     st.stop()
-
 
 # ==========================================
 # INTELLIGENT ANALYSIS (Brain at Work)
 # ==========================================
 buy_signals, sell_signals, signal_score, overall_sentiment, confidence, risk_score = brain.generate_smart_signals(data)
 levels = brain.calculate_advanced_risk_levels(data)
+
 
 # ==========================================
 # PAGE ROUTING
