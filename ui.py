@@ -499,7 +499,7 @@ def render_header():
     st.markdown('<div class="toro-header-container" style="padding: 8px 15px;">', unsafe_allow_html=True)
     
     # Create two columns: logo on left, indices on right
-    col_logo, col_indices = st.columns([0.3, 0.7], gap="small")
+    col_logo, col_indices = st.columns([0.2, 0.8], gap="small")
     
     with col_logo:
         # Logo and title
@@ -861,11 +861,11 @@ def render_search_section(stocks_dict):
 
     
     
-   #=======================
-    # RENDER METRICS
-    #==========================
+#=======================
+# RENDER METRICS
+#==========================
 def render_metrics(data, buy, sell, stock):
-    """Render metrics with responsive layout for mobile/desktop"""
+    """Render metrics with responsive layout for mobile/desktop - Theme Aware"""
 
     # =========================
     # SAFETY CHECK (IMPORTANT)
@@ -874,57 +874,90 @@ def render_metrics(data, buy, sell, stock):
         st.warning("⚠️ Not enough data to display metrics")
         return
 
-    st.markdown(
-        "<div style='font-size: 13px; font-weight: 600; color: #8892b0; margin-bottom: 10px; letter-spacing: 1px;'>📊 MARKET OVERVIEW</div>",
-        unsafe_allow_html=True
-    )
+    # =========================
+    # THEME DETECTION
+    # =========================
+    theme_mode = st.session_state.get('theme_mode', 'dark')
+    
+    # Theme-aware colors
+    if theme_mode == 'light':
+        colors = {
+            'text_primary': '#1a1a1a',
+            'text_secondary': '#6c757d',
+            'accent': '#0066cc',
+            'positive': '#059669',
+            'negative': '#dc2626',
+            'neutral': '#d97706',
+            'border': '#e9ecef',
+            'box_bg': 'linear-gradient(135deg, #ffffff, #f8f9fa)',
+            'hover_border': '#0066cc',
+            'box_shadow': '0 1px 3px rgba(0,0,0,0.05)'
+        }
+    else:  # dark mode - your original cyber theme
+        colors = {
+            'text_primary': '#ffffff',
+            'text_secondary': '#8892b0',
+            'accent': '#00ffff',
+            'positive': '#00ff88',
+            'negative': '#ff1744',
+            'neutral': '#ffd700',
+            'border': 'rgba(0,255,255,0.15)',
+            'box_bg': 'linear-gradient(135deg, rgba(10,20,40,0.95), rgba(5,10,20,0.98))',
+            'hover_border': 'rgba(0,255,255,0.4)',
+            'box_shadow': '0 2px 12px rgba(0,255,255,0.1)'
+        }
 
     # =========================
-    # CSS (Keep Once)
+    # CSS (Theme-Aware)
     # =========================
-    st.markdown("""
+    st.markdown(f"""
     <style>
-    .premium-metric-box {
-        background: linear-gradient(135deg, rgba(10,20,40,0.95), rgba(5,10,20,0.98));
+    .premium-metric-box {{
+        background: {colors['box_bg']};
         border-radius: 10px;
-        border: 1px solid rgba(0,255,255,0.15);
+        border: 1px solid {colors['border']};
         padding: 10px 8px;
         margin: 4px 0;
         text-align: center;
         transition: all 0.2s ease;
-    }
-    .premium-metric-box:hover {
-        border-color: rgba(0,255,255,0.4);
-        box-shadow: 0 2px 12px rgba(0,255,255,0.1);
-    }
-    .premium-metric-label {
+    }}
+    .premium-metric-box:hover {{
+        border-color: {colors['hover_border']};
+        box-shadow: {colors['box_shadow']};
+    }}
+    .premium-metric-label {{
         font-size: 9px;
-        color: #8892b0;
+        color: {colors['text_secondary']};
         letter-spacing: 0.5px;
         margin-bottom: 4px;
-    }
-    .premium-metric-value {
+    }}
+    .premium-metric-value {{
         font-size: 20px;
         font-weight: 700;
-        color: #00ffff;
+        color: {colors['accent']};
         line-height: 1.2;
         margin-bottom: 4px;
-    }
-    .premium-metric-change {
+    }}
+    .premium-metric-change {{
         font-size: 11px;
         font-weight: 500;
         margin-bottom: 4px;
-    }
-    .premium-metric-status {
+    }}
+    .premium-metric-status {{
         display: inline-block;
         padding: 2px 8px;
         border-radius: 12px;
         font-size: 9px;
         font-weight: 600;
         margin-top: 3px;
-    }
+    }}
     </style>
     """, unsafe_allow_html=True)
+
+    st.markdown(
+        f"<div style='font-size: 13px; font-weight: 600; color: {colors['text_secondary']}; margin-bottom: 10px; letter-spacing: 1px;'>📊 MARKET OVERVIEW</div>",
+        unsafe_allow_html=True
+    )
 
     # =========================
     # CALCULATIONS
@@ -935,7 +968,7 @@ def render_metrics(data, buy, sell, stock):
     change = current_price - prev_price
     change_pct = (change / prev_price * 100) if prev_price else 0
 
-    change_color = "#00ff88" if change >= 0 else "#ff1744"
+    change_color = colors['positive'] if change >= 0 else colors['negative']
     change_sign = "▲" if change >= 0 else "▼"
 
     # RSI
@@ -943,18 +976,18 @@ def render_metrics(data, buy, sell, stock):
     if rsi > 70:
         status = "Overbought"
         icon = "🔴"
-        status_color = "#ff1744"
-        bg_color = "rgba(255,23,68,0.15)"
+        status_color = colors['negative']
+        bg_color = f"rgba({'220,38,38' if theme_mode == 'light' else '255,23,68'}, 0.15)"
     elif rsi < 30:
         status = "Oversold"
         icon = "🟢"
-        status_color = "#00ff88"
-        bg_color = "rgba(0,255,136,0.15)"
+        status_color = colors['positive']
+        bg_color = f"rgba({'5,150,105' if theme_mode == 'light' else '0,255,136'}, 0.15)"
     else:
         status = "Neutral"
         icon = "🟡"
-        status_color = "#ffd700"
-        bg_color = "rgba(255,215,0,0.15)"
+        status_color = colors['neutral']
+        bg_color = f"rgba({'217,119,6' if theme_mode == 'light' else '255,215,0'}, 0.15)"
 
     # Volume
     current_volume = data['Volume'].iloc[-1]
@@ -973,19 +1006,19 @@ def render_metrics(data, buy, sell, stock):
         vol_ratio = (current_volume / avg_volume - 1) * 100
         if vol_ratio > 20:
             vol_status = "🔥 High"
-            vol_status_color = "#00ff88"
-            vol_bg = "rgba(0,255,136,0.15)"
+            vol_status_color = colors['positive']
+            vol_bg = f"rgba({'5,150,105' if theme_mode == 'light' else '0,255,136'}, 0.15)"
         elif vol_ratio < -20:
             vol_status = "❄️ Low"
-            vol_status_color = "#ffa500"
-            vol_bg = "rgba(255,165,0,0.15)"
+            vol_status_color = colors['neutral']
+            vol_bg = f"rgba({'217,119,6' if theme_mode == 'light' else '255,165,0'}, 0.15)"
         else:
             vol_status = "📊 Avg"
-            vol_status_color = "#ffd700"
-            vol_bg = "rgba(255,215,0,0.15)"
+            vol_status_color = colors['neutral']
+            vol_bg = f"rgba({'217,119,6' if theme_mode == 'light' else '255,215,0'}, 0.15)"
     else:
         vol_status = "📊 N/A"
-        vol_status_color = "#8892b0"
+        vol_status_color = colors['text_secondary']
         vol_bg = "rgba(136,146,176,0.15)"
 
     # Trend
@@ -993,31 +1026,31 @@ def render_metrics(data, buy, sell, stock):
     if pd.notna(ma50) and current_price > ma50:
         trend = "UPTREND"
         trend_icon = "📈"
-        trend_color = "#00ff88"
-        trend_bg = "rgba(0,255,136,0.15)"
+        trend_color = colors['positive']
+        trend_bg = f"rgba({'5,150,105' if theme_mode == 'light' else '0,255,136'}, 0.15)"
     else:
         trend = "DOWNTREND"
         trend_icon = "📉"
-        trend_color = "#ff1744"
-        trend_bg = "rgba(255,23,68,0.15)"
+        trend_color = colors['negative']
+        trend_bg = f"rgba({'220,38,38' if theme_mode == 'light' else '255,23,68'}, 0.15)"
 
     # Signal
     signal = data['Signal'].iloc[-1] if 'Signal' in data.columns else 0
     if signal == 1:
         sig_text = "BUY"
         sig_icon = "🟢"
-        sig_color = "#00ff88"
-        sig_bg = "rgba(0,255,136,0.15)"
+        sig_color = colors['positive']
+        sig_bg = f"rgba({'5,150,105' if theme_mode == 'light' else '0,255,136'}, 0.15)"
     elif signal == -1:
         sig_text = "SELL"
         sig_icon = "🔴"
-        sig_color = "#ff1744"
-        sig_bg = "rgba(255,23,68,0.15)"
+        sig_color = colors['negative']
+        sig_bg = f"rgba({ '220,38,38' if theme_mode == 'light' else '255,23,68'}, 0.15)"
     else:
         sig_text = "HOLD"
         sig_icon = "🟡"
-        sig_color = "#ffd700"
-        sig_bg = "rgba(255,215,0,0.15)"
+        sig_color = colors['neutral']
+        sig_bg = f"rgba({ '217,119,6' if theme_mode == 'light' else '255,215,0'}, 0.15)"
 
     # =========================
     # RESPONSIVE UI
@@ -1056,7 +1089,7 @@ def render_metrics(data, buy, sell, stock):
         st.markdown(f"""
         <div class="premium-metric-box">
             <div class="premium-metric-label">📊 VOLUME</div>
-            <div class="premium-metric-value" style="font-size:16px;">{vol_display}</div>
+            <div class="premium-metric-value" style="font-size:16px; color: {colors['accent']};">{vol_display}</div>
             <div class="premium-metric-status" style="background: {vol_bg}; color: {vol_status_color};">
                 {vol_status}
             </div>
