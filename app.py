@@ -36,6 +36,32 @@ from data_manager import (
 )
 
 
+# Force dark mode
+st.markdown("""
+<style>
+/* Force everything to dark */
+.stApp, .stAppViewContainer, .main {
+    background-color: #0a0a0a !important;
+}
+
+body, .stMarkdown, .stText, p, div, span, label {
+    color: #ffffff !important;
+}
+
+section[data-testid="stSidebar"] {
+    background-color: #0a0a0a !important;
+}
+
+/* Your existing cyber theme works perfectly */
+</style>
+
+<script>
+document.documentElement.style.colorScheme = 'dark';
+</script>
+""", unsafe_allow_html=True)
+
+
+
 # ==========================================
 # FORCE CSS TO LOAD FIRST (Fixes styling issue)
 # ==========================================
