@@ -1,4 +1,4 @@
-# indices.py - Clickable Indices (Fully Customized)
+# indices.py - Clickable Indices (Theme-Friendly)
 
 import streamlit as st
 import yfinance as yf
@@ -29,8 +29,6 @@ def get_index_data():
                     'price': current_price,
                     'change': change,
                     'change_pct': change_pct,
-                    'color': "#00ff88" if change >= 0 else "#ff1744",
-                    'arrow': "▲" if change >= 0 else "▼",
                     'symbol': symbol,
                     'display': info["display"]
                 }
@@ -39,8 +37,6 @@ def get_index_data():
                     'price': 0,
                     'change': 0,
                     'change_pct': 0,
-                    'color': "#8892b0",
-                    'arrow': "●",
                     'symbol': symbol,
                     'display': info["display"]
                 }
@@ -51,15 +47,66 @@ def get_index_data():
             'price': 0,
             'change': 0,
             'change_pct': 0,
-            'color': "#8892b0",
-            'arrow': "●",
             'symbol': info["symbol"],
             'display': info["display"]
         } for key, info in INDICES.items()}
 
+# ==========================================
+# THEME-AWARE CSS FOR INDICES
+# ==========================================
+def get_indices_css():
+    """Return theme-aware CSS for indices"""
+    return """
+    <style>
+    .index-item {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        background: var(--bg-card);
+        padding: 6px 14px;
+        border-radius: 20px;
+        border: 1px solid var(--border-glow);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .index-item:hover {
+        background: var(--bg-secondary);
+        border-color: var(--accent-cyan);
+        transform: translateY(-1px);
+    }
+    
+    .index-name {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-secondary);
+    }
+    
+    .index-price {
+        font-size: 13px;
+        font-weight: 700;
+    }
+    
+    .index-change {
+        font-size: 10px;
+        font-weight: 600;
+    }
+    
+    .index-positive {
+        color: var(--accent-green);
+    }
+    
+    .index-negative {
+        color: var(--accent-red);
+    }
+    </style>
+    """
 
 def render_indices():
-    """Display clickable indices using Streamlit buttons"""
+    """Display clickable indices using Streamlit buttons (Theme-Friendly)"""
+    
+    # Inject theme-aware CSS
+    st.markdown(get_indices_css(), unsafe_allow_html=True)
     
     indices_data = get_index_data()
     
@@ -69,11 +116,10 @@ def render_indices():
     for idx, (key, data) in enumerate(indices_data.items()):
         with cols[idx]:
             price = data['price']
-            color = data['color']
-            arrow = data['arrow']
             change_pct = abs(data['change_pct'])
             symbol = data['symbol']
             display_name = data['display']
+            is_positive = data['change'] >= 0
             
             # Format price display
             if price >= 100000:
@@ -83,11 +129,15 @@ def render_indices():
             else:
                 price_text = f"{price:.2f}"
             
-            # Create a styled button
+            # Set color class based on change
+            change_class = "index-positive" if is_positive else "index-negative"
+            arrow = "▲" if is_positive else "▼"
+            
+            # Create a styled button with theme-aware colors
             button_label = f"""
 **{display_name}**
-{price_text}
-{arrow} {change_pct:.2f}%
+<span style="font-size:13px; font-weight:700;">{price_text}</span>
+<span class="{change_class}">{arrow} {change_pct:.2f}%</span>
 """
             
             # Use a button with custom styling
@@ -104,22 +154,24 @@ def render_indices():
 
 
 def render_indices_html():
-    """Alternative: Display clickable indices using HTML (no button feel)"""
+    """Display clickable indices using HTML (Theme-Aware - No rerun needed)"""
+    
+    # Inject theme-aware CSS
+    st.markdown(get_indices_css(), unsafe_allow_html=True)
     
     indices_data = get_index_data()
     
-    # Build HTML with inline styles and JavaScript
+    # Build HTML with theme-aware CSS variables and JavaScript
     html = '''
     <div style="display: flex; justify-content: flex-end; align-items: center; gap: 15px; flex-wrap: wrap;">
     '''
     
     for key, data in indices_data.items():
         price = data['price']
-        color = data['color']
-        arrow = data['arrow']
         change_pct = abs(data['change_pct'])
         symbol = data['symbol']
         display_name = data['display']
+        is_positive = data['change'] >= 0
         
         # Format price
         if price >= 100000:
@@ -129,45 +181,77 @@ def render_indices_html():
         else:
             price_text = f"{price:.2f}"
         
+        # Set color class
+        change_class = "index-positive" if is_positive else "index-negative"
+        arrow = "▲" if is_positive else "▼"
+        
         # Generate a unique ID
         unique_id = f"idx_{key.replace(' ', '_')}"
         
         html += f'''
-        <div id="{unique_id}" class="index-item" 
-             style="display: flex; align-items: baseline; gap: 8px; 
-                    background: rgba(0, 255, 255, 0.05); 
-                    padding: 6px 14px; 
-                    border-radius: 20px; 
-                    border: 1px solid rgba(0, 255, 255, 0.15);
-                    cursor: pointer;
-                    transition: all 0.2s ease;">
-            <span style="font-size: 11px; font-weight: 600; color: #8892b0;">{display_name}</span>
-            <span style="font-size: 13px; font-weight: 700; color: {color};">{price_text}</span>
-            <span style="font-size: 10px; font-weight: 600; color: {color};">{arrow} {change_pct:.2f}%</span>
+        <div id="{unique_id}" class="index-item">
+            <span class="index-name">{display_name}</span>
+            <span class="index-price" style="color: var(--accent-cyan);">{price_text}</span>
+            <span class="index-change {change_class}">{arrow} {change_pct:.2f}%</span>
         </div>
         
         <script>
-        document.getElementById('{unique_id}').addEventListener('click', function() {{
-            // Use Streamlit's query parameters to set the stock
-            const url = new URL(window.location);
-            url.searchParams.set('stock', '{symbol}');
-            url.searchParams.set('name', '{display_name}');
-            window.location.href = url;
-        }});
-        
-        // Add hover effect
-        document.getElementById('{unique_id}').addEventListener('mouseenter', function() {{
-            this.style.background = 'rgba(0, 255, 255, 0.12)';
-            this.style.borderColor = 'rgba(0, 255, 255, 0.4)';
-            this.style.transform = 'translateY(-1px)';
-        }});
-        
-        document.getElementById('{unique_id}').addEventListener('mouseleave', function() {{
-            this.style.background = 'rgba(0, 255, 255, 0.05)';
-            this.style.borderColor = 'rgba(0, 255, 255, 0.15)';
-            this.style.transform = 'translateY(0)';
-        }});
+        (function() {{
+            const element = document.getElementById('{unique_id}');
+            if (element) {{
+                // Remove any existing listeners to prevent duplicates
+                const newElement = element.cloneNode(true);
+                element.parentNode.replaceChild(newElement, element);
+                
+                newElement.addEventListener('click', function(e) {{
+                    e.preventDefault();
+                    // Use Streamlit's query parameters
+                    const url = new URL(window.location);
+                    url.searchParams.set('stock', '{symbol}');
+                    url.searchParams.set('name', '{display_name}');
+                    window.location.href = url;
+                }});
+            }}
+        }})();
         </script>
+        '''
+    
+    html += '</div>'
+    
+    return html
+
+
+def render_indices_simple():
+    """Simple inline display (no click functionality) - Theme-Friendly"""
+    
+    indices_data = get_index_data()
+    
+    # Build simple HTML with theme-aware colors
+    html = '<div style="display: flex; justify-content: flex-end; align-items: center; gap: 15px; flex-wrap: wrap;">'
+    
+    for key, data in indices_data.items():
+        price = data['price']
+        change_pct = abs(data['change_pct'])
+        display_name = data['display']
+        is_positive = data['change'] >= 0
+        
+        # Format price
+        if price >= 100000:
+            price_text = f"{price/1000:.1f}K"
+        elif price >= 10000:
+            price_text = f"{price:,.0f}"
+        else:
+            price_text = f"{price:.2f}"
+        
+        arrow = "▲" if is_positive else "▼"
+        color = "var(--accent-green)" if is_positive else "var(--accent-red)"
+        
+        html += f'''
+        <div style="display: flex; align-items: baseline; gap: 6px;">
+            <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary);">{display_name}</span>
+            <span style="font-size: 12px; font-weight: 700; color: var(--accent-cyan);">{price_text}</span>
+            <span style="font-size: 10px; font-weight: 600; color: {color};">{arrow} {change_pct:.2f}%</span>
+        </div>
         '''
     
     html += '</div>'
