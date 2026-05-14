@@ -641,11 +641,6 @@ with st.sidebar:
             
             st.markdown("---")
             
-            # Watchlist
-            st.markdown("### 📋 Watchlist")
-            watchlist_fragment(stocks_dict)
-            
-            st.markdown("---")
             
             # System Status
             st.markdown("### ⚡ Status")
