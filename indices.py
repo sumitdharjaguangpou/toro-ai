@@ -1,4 +1,4 @@
-# indices.py - Clickable Indices for TORO AI (Light & Dark Mode Compatible)
+# indices.py - Clickable Indices with Explicit Theme Detection
 
 import streamlit as st
 import yfinance as yf
@@ -51,88 +51,73 @@ def get_index_data():
         } for key, info in INDICES.items()}
 
 def render_indices():
-    """Render clickable indices - Light & Dark Mode Compatible"""
+    """Render clickable indices - Works in both light and dark mode"""
     
     indices_data = get_index_data()
     
-    # Theme-aware CSS for index buttons (works in both light and dark mode)
-    st.markdown("""
+    # Detect current Streamlit theme
+    try:
+        # Get the current theme from Streamlit config
+        theme = st.get_option("theme.base")
+        is_dark = theme == "dark"
+    except:
+        # Fallback to system preference detection
+        is_dark = False
+    
+    # Theme-specific colors
+    if is_dark:
+        bg_gradient_start = "#2d2d2d"
+        bg_gradient_end = "#1a1a1a"
+        border_color = "#404040"
+        text_color = "#e0e0e0"
+        hover_bg_start = "#404040"
+        hover_bg_end = "#2d2d2d"
+        hover_border = "#666666"
+        positive_color = "#00ff88"
+        negative_color = "#ff6b6b"
+    else:
+        bg_gradient_start = "#f8f9fa"
+        bg_gradient_end = "#e9ecef"
+        border_color = "#dee2e6"
+        text_color = "#212529"
+        hover_bg_start = "#e9ecef"
+        hover_bg_end = "#dee2e6"
+        hover_border = "#adb5bd"
+        positive_color = "#008000"
+        negative_color = "#dc3545"
+    
+    # Inject theme-aware CSS
+    st.markdown(f"""
     <style>
-    /* Light mode styles */
-    @media (prefers-color-scheme: light) {
-        .stButton button {
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef) !important;
-            border: 1px solid #dee2e6 !important;
-            color: #212529 !important;
-        }
-        
-        .stButton button:hover {
-            background: linear-gradient(135deg, #e9ecef, #dee2e6) !important;
-            border-color: #adb5bd !important;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-        }
-        
-        .positive-change {
-            color: #008000 !important;
-        }
-        
-        .negative-change {
-            color: #dc3545 !important;
-        }
-    }
-    
-    /* Dark mode styles */
-    @media (prefers-color-scheme: dark) {
-        .stButton button {
-            background: linear-gradient(135deg, #2d2d2d, #1a1a1a) !important;
-            border: 1px solid #404040 !important;
-            color: #e0e0e0 !important;
-        }
-        
-        .stButton button:hover {
-            background: linear-gradient(135deg, #404040, #2d2d2d) !important;
-            border-color: #666666 !important;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
-        }
-        
-        .positive-change {
-            color: #00ff88 !important;
-        }
-        
-        .negative-change {
-            color: #ff6b6b !important;
-        }
-    }
-    
-    /* Base button styling */
-    .stButton button {
+    /* Button styling */
+    .stButton button {{
+        background: linear-gradient(135deg, {bg_gradient_start}, {bg_gradient_end}) !important;
+        border: 1px solid {border_color} !important;
         border-radius: 20px !important;
         padding: 6px 12px !important;
         height: auto !important;
         transition: all 0.2s ease !important;
         font-size: 12px !important;
         white-space: nowrap !important;
+        color: {text_color} !important;
         font-weight: 500 !important;
-    }
+    }}
     
-    .stButton button:hover {
+    .stButton button:hover {{
         transform: translateY(-1px) !important;
-    }
+        background: linear-gradient(135deg, {hover_bg_start}, {hover_bg_end}) !important;
+        border-color: {hover_border} !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    }}
     
     /* Mobile responsive */
-    @media (max-width: 768px) {
-        .stButton button {
+    @media (max-width: 768px) {{
+        .stButton button {{
             padding: 4px 8px !important;
             font-size: 10px !important;
             white-space: normal !important;
-        }
-    }
-    
-    /* Ensure text contrast in both themes */
-    .stButton button p {
-        margin: 0 !important;
-        line-height: 1.4 !important;
-    }
+        }}
+    }}
     </style>
     """, unsafe_allow_html=True)
     
@@ -157,7 +142,7 @@ def render_indices():
             
             arrow = "▲" if is_positive else "▼"
             
-            # Use markdown formatting within button for colored text
+            # Create button text with colored change
             if is_positive:
                 button_text = f"{display_name} {price_text} :green[{arrow} {change_pct:.1f}%]"
             else:
