@@ -9,6 +9,15 @@ stocks_dict = {
 "TCS": "TCS.NS",
 "TATA CONSULTANCY SERVICES": "TCS.NS",
 
+"TATA STEEL": "TATASTEEL.NS",
+"tata steel": "TATASTEEL.NS",
+
+"Tata Motors Commercial Vehicles": "TMCV.NS",
+"Tata Motors Trucks": "TMCV.NS",
+"Tata Motors Buses": "TMCV.NS",
+"Tata Motors Vans": "TMCV.NS",
+
+
 "INFOSYS": "INFY.NS",
 "INFY": "INFY.NS",
 
@@ -995,7 +1004,335 @@ stocks_dict = {
 "SUNTV": "SUNTV.NS",
 
 "ANANT RAJ": "ANANTRAJ.NS",
-"ANANTRAJ": "ANANTRAJ.NS"
+"ANANTRAJ": "ANANTRAJ.NS",
+
+
+"PNB Housing Finance": "PNBHOUSING.NS",
+"PNB Housing": "PNBHOUSING.NS",
+
+"LIC India": "LICI.NS",
+"LIC": "LICI.NS",
+
+"Sundaram Finance": "SUNDARMFIN.NS",
+"Sundaram": "SUNDARMFIN.NS",
+
+"Manappuram Finance": "MANAPPURAM.NS",
+"Manappuram": "MANAPPURAM.NS",
+
+"Mahindra Finance": "M&MFIN.NS",
+"M&M Finance": "M&MFIN.NS",
+
+"IIFL Finance": "IIFL.NS",
+"IIFL": "IIFL.NS",
+
+"360 ONE": "360ONE.NS",
+"360ONE": "360ONE.NS",
+
+"Bajaj Housing Finance": "BAJAJHFL.NS",
+"Bajaj Housing": "BAJAJHFL.NS",
+
+
+"Oracle Corporation": "ORACLEFIN.NS",
+
+"Newgen Software": "NEWGEN.NS",
+"Newgen": "NEWGEN.NS",
+
+"Tata Elxsi": "TATAELXSI.NS",
+"Elxsi": "TATAELXSI.NS",
+
+"Zensar Tech": "ZENSARTECH.NS",
+
+"Cybage": "CYBGLOBAL.NS",
+
+"Syrma SGS": "SYRMA.NS",
+"Syrma": "SYRMA.NS",
+
+"Netweb Technologies": "NETWEB.NS",
+"Netweb": "NETWEB.NS",
+
+
+"Hitachi Energy": "POWERINDIA.NS",
+"Hitachi": "POWERINDIA.NS",
+
+"Waaree Energies": "WAAREEENER.NS",
+"Waaree Energy": "WAAREEENER.NS",
+
+"Premier Energies": "PREMIERENE.NS",
+"Premier": "PREMIERENE.NS",
+
+"KPI Green": "KPIGREEN.NS",
+"KPI": "KPIGREEN.NS",
+
+"Reliance Power": "RPOWER.NS",
+"RPower": "RPOWER.NS",
+
+"Reliance Infrastructure": "RELINFRA.NS",
+"Relinfra": "RELINFRA.NS",
+
+"Torrent Power": "TORNTPOWER.NS",
+"Torrent Power Ltd": "TORNTPOWER.NS",
+
+
+"OLA Electric": "OLAELEC.NS",
+"OLA": "OLAELEC.NS",
+
+"Exide Industries": "EXIDEIND.NS",
+"Exide": "EXIDEIND.NS",
+
+"UNO Minda": "UNOMINDA.NS",
+"Minda Industries": "UNOMINDA.NS",
+
+"Sona BLW": "SONACOMS.NS",
+"Sona Comstar": "SONACOMS.NS",
+
+"Samvardhana Motherson": "MOTHERSON.NS",
+"Motherson": "MOTHERSON.NS",
+
+
+"SRF": "SRF.NS",
+
+"Alkyl Amines": "ALKYLAMINE.NS",
+"Alkyl": "ALKYLAMINE.NS",
+
+"Tatva Chintan": "TATVA.NS",
+"Tatva": "TATVA.NS",
+
+"Gujarat Alkalies": "GUJALKALI.NS",
+"GACL": "GUJALKALI.NS",
+
+"Chemplast Sanmar": "CHEMPLASTS.NS",
+"Chemplast": "CHEMPLASTS.NS",
+
+
+"Krishna Institute": "KIMS.NS",
+"KIMS": "KIMS.NS",
+
+"Aster DM Healthcare": "ASTERDM.NS",
+"Aster": "ASTERDM.NS",
+
+"Rainbow Hospitals": "RAINBOW.NS",
+"Rainbow": "RAINBOW.NS",
+
+"Medanta": "MEDANTA.NS",
+"Global Health": "MEDANTA.NS",
+
+"Honasa Consumer": "HONASA.NS",
+"Mamaearth": "HONASA.NS",
+
+"FSN E-Commerce": "NYKAA.NS",
+"Nykaa": "NYKAA.NS",
+
+"Brainbees Solutions": "FIRSTCRY.NS",
+"FirstCry": "FIRSTCRY.NS",
+
+"Manyavar": "VEDANTFASH.NS",
+"Vedant Fashions": "VEDANTFASH.NS",
+
+"Campus Activewear": "CAMPUS.NS",
+"Campus": "CAMPUS.NS",
+
+"Data Patterns": "DATAPATTNS.NS",
+"Data Patterns Ltd": "DATAPATTNS.NS",
+
+"Paras Defence": "PARAS.NS",
+"Paras": "PARAS.NS",
+
+"Zen Technologies": "ZENTEC.NS",
+"Zen Tech": "ZENTEC.NS",
+
+"Garden Reach Shipbuilders": "GRSE.NS",
+"GRSE": "GRSE.NS",
+
+"DCX Systems": "DCXINDIA.NS",
+"DCX": "DCXINDIA.NS",
+
+"Oil India": "OIL.NS",
+"OIL": "OIL.NS",
+
+"HPCL": "HINDPETRO.NS",
+"Hindustan Petroleum": "HINDPETRO.NS",
+
+"BPCL": "BPCL.NS",
+"Bharat Petroleum": "BPCL.NS",
+
+"Chennai Petroleum": "CHENNPETRO.NS",
+"CPCL": "CHENNPETRO.NS",
+
+"VRL Logistics": "VRLLOG.NS",
+"VRL": "VRLLOG.NS",
+
+"Mahindra Logistics": "MAHLOG.NS",
+"Mahindra Log": "MAHLOG.NS",
+
+"Gateway Distriparks": "GATEWAY.NS",
+"Gateway": "GATEWAY.NS",
+"JWL": "JWL.NS",
+"Jupiter Wagons": "JWL.NS",
+
+"Titagarh Rail": "TITAGARH.NS",
+"Titagarh": "TITAGARH.NS",
+
+"Texmaco Rail": "TEXRAIL.NS",
+"Texmaco": "TEXRAIL.NS",
+
+"RITES": "RITES.NS",
+"Rites Ltd": "RITES.NS",
+
+"Praj Industries": "PRAJIND.NS",
+"Praj": "PRAJIND.NS",
+
+"Transformers & Rectifiers": "TARIL.NS",
+"TARIL": "TARIL.NS",
+
+"BLS International": "BLS.NS",
+"BLS": "BLS.NS",
+
+"Jyoti CNC": "JYOTICNC.NS",
+"Jyoti": "JYOTICNC.NS",
+
+"Kernex Microsystems": "KERNEX.NS",
+"Kernex": "KERNEX.NS",
+"Railtel": "RAILTEL.NS",
+"Railtel Corp": "RAILTEL.NS",
+
+"Titagarh Wagons": "TITAGARH.NS",
+
+"Garden Reach": "GRSE.NS",
+
+"Texmaco Infrastructure": "TEXINFRA.NS",
+
+"Container Corp": "CONCOR.NS",
+
+"Bharat Forge": "BHARATFORG.NS",
+"Forge": "BHARATFORG.NS",
+
+"Engineers India": "ENGINERSIN.NS",
+"EIL": "ENGINERSIN.NS",
+"Unimech Aerospace": "UNIMECH.NS",
+"Unimech": "UNIMECH.NS",
+
+"Astra Microwave": "ASTRAMICRO.NS",
+"Astra": "ASTRAMICRO.NS",
+
+"MTAR Technologies": "MTARTECH.NS",
+"MTAR": "MTARTECH.NS",
+
+"ideaForge": "IDEAFORGE.NS",
+"IdeaForge": "IDEAFORGE.NS",
+
+"Cyient DLM": "CYIENTDLM.NS",
+"DLM": "CYIENTDLM.NS",
+"Servotech": "SERVOTECH.NS",
+"Servotech Power": "SERVOTECH.NS",
+
+"Websol Energy": "WEBELSOLAR.NS",
+"Websol": "WEBELSOLAR.NS",
+
+"Premier Explosives": "PREMEXPLN.NS",
+"Premier Explosive": "PREMEXPLN.NS",
+
+"GP Eco Solutions": "GPECO.NS",
+"GPECO": "GPECO.NS",
+
+"Exicom": "EXICOM.NS",
+"Exicom Tele": "EXICOM.NS",
+"Saksoft": "SAKSOFT.NS",
+"Saksoft Ltd": "SAKSOFT.NS",
+
+"Tanla Platforms": "TANLA.NS",
+
+"RateGain": "RATEGAIN.NS",
+"RateGain Travel": "RATEGAIN.NS",
+
+"Subex": "SUBEXLTD.NS",
+"Subex Ltd": "SUBEXLTD.NS",
+
+"Genesys International": "GENESYS.NS",
+"Genesys": "GENESYS.NS",
+"Deepak Builders": "DBEIL.NS",
+
+"Rossari Biotech": "ROSSARI.NS",
+"Rossari": "ROSSARI.NS",
+
+"Neogen Chemicals": "NEOGEN.NS",
+"Neogen": "NEOGEN.NS",
+
+"Aether Industries": "AETHER.NS",
+"Aether": "AETHER.NS",
+
+"Fineotex Chemical": "FCL.NS",
+"Fineotex": "FCL.NS",
+"Signature Global": "SIGNATURE.NS",
+"Signature": "SIGNATURE.NS",
+
+"Ganesh Housing": "GANESHHOUC.NS",
+"Ganesh": "GANESHHOUC.NS",
+
+"Ahluwalia Contracts": "AHLUCONT.NS",
+"Ahluwalia": "AHLUCONT.NS",
+
+"Capacite Infra": "CAPACITE.NS",
+"Capacite": "CAPACITE.NS",
+"Senco Gold": "SENCO.NS",
+"Senco": "SENCO.NS",
+
+"Thangamayil": "THANGAMAYL.NS",
+"Thangamayil Jewellers": "THANGAMAYL.NS",
+
+"Ethos": "ETHOSLTD.NS",
+"Ethos Ltd": "ETHOSLTD.NS",
+
+# ETFS INDEXES
+"NIFTYBEES": "NIFTYBEES.NS",
+"NIFTY ETF": "NIFTYBEES.NS",
+
+"BANKBEES": "BANKBEES.NS",
+"BANK ETF": "BANKBEES.NS",
+
+"JUNIORBEES": "JUNIORBEES.NS",
+
+"MID150BEES": "MID150BEES.NS",
+
+"MON100": "MON100.NS",
+"NASDAQ ETF": "MON100.NS",
+
+"MAFANG": "MAFANG.NS",
+"FANG ETF": "MAFANG.NS",
+
+# THEMATIS ETFS
+"ITBEES": "ITBEES.NS",
+"IT ETF": "ITBEES.NS",
+
+"PSUBNKBEES": "PSUBNKBEES.NS",
+"PSU BANK ETF": "PSUBNKBEES.NS",
+
+"AUTOBEES": "AUTOBEES.NS",
+"AUTO ETF": "AUTOBEES.NS",
+
+"PHARMABEES": "PHARMABEES.NS",
+"PHARMA ETF": "PHARMABEES.NS",
+
+"CPSEETF": "CPSEETF.NS",
+"CPSE ETF": "CPSEETF.NS",
+
+"ICICIB22": "ICICIB22.NS",
+"BHARAT22": "ICICIB22.NS",
+
+# GOLD & SILVER
+"GOLDBEES": "GOLDBEES.NS",
+"GOLD ETF": "GOLDBEES.NS",
+
+"SILVERBEES": "SILVERBEES.NS",
+"SILVER ETF": "SILVERBEES.NS",
+
+"HDFCGOLD": "HDFCGOLD.NS",
+
+"KOTAKGOLD": "KOTAKGOLD.NS",
+ 
+
+
+
+
 
 }
 
