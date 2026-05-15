@@ -127,7 +127,7 @@ def render_indices():
     for idx, (key, data) in enumerate(indices_data.items()):
         with cols[idx]:
             price = data['price']
-            change_pct = abs(data['change_pct'])
+            change_pct = data['change_pct']
             symbol = data['symbol']
             display_name = data['display']
             is_positive = data['change'] >= 0
@@ -144,9 +144,15 @@ def render_indices():
             
             # Create button text with colored change
             if is_positive:
-                button_text = f"{display_name} {price_text} :green[{arrow} {change_pct:.1f}%]"
+                button_text = (
+                    f"{display_name} {price_text} "
+                    f":green[{arrow} {abs(change_pct):.2f}%]"
+                )
             else:
-                button_text = f"{display_name} {price_text} :red[{arrow} {change_pct:.1f}%]"
+                button_text = (
+                    f"{display_name} {price_text} "
+                    f":red[{arrow} {abs(change_pct):.2f}%]"
+    )
             
             if st.button(button_text, key=f"index_{key}", use_container_width=True):
                 st.session_state.selected_stock = symbol
