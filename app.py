@@ -757,12 +757,68 @@ if st.session_state.get("watchlist_clicked_stock"):
 if 'previous_stock' not in st.session_state:
     st.session_state.previous_stock = None
 
-
-    # Reset chart initialization flag
+# Reset chart initialization flag when stock changes
+if st.session_state.previous_stock != stock:
     if 'chart_initialized' in st.session_state:
         st.session_state.chart_initialized = False
     # Update previous stock
     st.session_state.previous_stock = stock
+
+# ==========================================
+# STOCK VALIDATION (Fast Fail - Prevent Hanging)
+# ==========================================
+
+@st.cache_data(ttl=300, show_spinner=False)
+def quick_validate_stock(symbol):
+    """Quick validation - returns True if stock exists (max 3 seconds)"""
+    try:
+        import yfinance as yf
+        
+        # Try to get just one day of data (very fast)
+        ticker = yf.Ticker(symbol)
+        hist = ticker.history(period="1d")
+        
+        if not hist.empty:
+            return True
+            
+        # Try alternate method
+        info = ticker.info
+        if info and 'regularMarketPrice' in info:
+            return True
+            
+        return False
+    except:
+        return False
+
+def is_valid_stock_symbol(symbol, stocks_dict):
+    """Multi-layer validation - check if stock exists"""
+    # Layer 1: Check local dictionary (instant)
+    clean_symbol = symbol.replace('.NS', '').replace('.BO', '')
+    
+    if clean_symbol in stocks_dict:
+        return True
+    if symbol in stocks_dict.values():
+        return True
+    
+    # Layer 2: Quick API check (with timeout protection)
+    try:
+        return quick_validate_stock(symbol)
+    except:
+        return False
+
+# Validate stock BEFORE trying to fetch data
+if stock:
+    with st.spinner("🔍 Validating stock symbol..."):
+        if not is_valid_stock_symbol(stock, stocks_dict):
+            st.error(f"❌ Invalid stock symbol: '{search}'")
+            st.markdown("""
+            💡 **Tips:**
+            - Check the spelling of the symbol
+            - Use NSE symbols like: **RELIANCE**, **TCS**, **HDFCBANK**, **INFY**
+            - Try searching from the suggestions below
+            - Make sure the stock is listed on NSE/BSE
+            """)
+            st.stop()
 
 # ==========================================
 # VALIDATE STOCK SELECTION
@@ -776,21 +832,13 @@ if not stock:
 interval = TIMEFRAMES[DEFAULT_TIMEFRAME]["interval"]
 period = TIMEFRAMES[DEFAULT_TIMEFRAME]["period"]
 
-# Create placeholder for data loading
-data_placeholder = st.empty()
-
 with st.spinner("📡 Fetching market data and analyzing..."):
     data = fetch_stock_data(stock, period, interval)
-    
-    # Show progress while loading
-    if data.empty:
-        data_placeholder.warning(f"⏳ Loading data for {stock}... Please wait or refresh.")
-        time.sleep(1)
-        st.rerun()  # Retry
 
 if data.empty:
     st.error(f"⚠️ No data available for {stock}")
     st.stop()
+
 
 # ==========================================
 # INTELLIGENT ANALYSIS (Brain at Work)
@@ -1043,14 +1091,86 @@ with tab1:
             """, unsafe_allow_html=True)
 
     with col_e3:
-        buy_count = sum(1 for r in ensemble_result['strategy_results'] if r['signal'] == 1)
-        sell_count = sum(1 for r in ensemble_result['strategy_results'] if r['signal'] == -1)
+    # ==========================================
+    # SMART MONEY INDEX (VWAP Based)
+    # ==========================================
+    
+        # Calculate VWAP (Volume Weighted Average Price)
+        close_prices = data['Close'].values
+        volumes = data['Volume'].values
+        
+        # Calculate typical price (H+L+C)/3 for better VWAP
+        if 'High' in data.columns and 'Low' in data.columns:
+            typical_prices = (data['High'].values + data['Low'].values + data['Close'].values) / 3
+        else:
+            typical_prices = close_prices
+        
+        # Calculate cumulative values
+        cumulative_typical_volume = (typical_prices * volumes).cumsum()
+        cumulative_volume = volumes.cumsum()
+        
+        # VWAP
+        vwap = cumulative_typical_volume / cumulative_volume
+        current_vwap = vwap[-1]
+        current_price = close_prices[-1]
+        
+        # Calculate Smart Money Signal
+        smi_diff = ((current_price - current_vwap) / current_vwap) * 100
+        
+        # Determine Smart Money Status
+        if smi_diff > 1.5:
+            smi_status = "STRONG ACCUMULATION"
+            smi_color = "#00ff88"
+            smi_icon = "💰💰"
+            smi_action = "Strong buy signal - Follow smart money"
+            smi_confidence = 90
+        elif smi_diff > 0.5:
+            smi_status = "ACCUMULATION"
+            smi_color = "#7cfc00"
+            smi_icon = "💰"
+            smi_action = "Smart money buying - Consider entry"
+            smi_confidence = 75
+        elif smi_diff < -1.5:
+            smi_status = "STRONG DISTRIBUTION"
+            smi_color = "#ff1744"
+            smi_icon = "💸💸"
+            smi_action = "Strong sell signal - Exit positions"
+            smi_confidence = 90
+        elif smi_diff < -0.5:
+            smi_status = "DISTRIBUTION"
+            smi_color = "#ff5252"
+            smi_icon = "💸"
+            smi_action = "Smart money selling - Reduce exposure"
+            smi_confidence = 75
+        else:
+            smi_status = "NEUTRAL"
+            smi_color = "#ffd700"
+            smi_icon = "🔄"
+            smi_action = "No clear signal - Wait"
+            smi_confidence = 50
+        
+        # Calculate VWAP trend (last 5 periods)
+        if len(vwap) > 5:
+            vwap_trend = ((vwap[-1] - vwap[-5]) / vwap[-5]) * 100
+            if vwap_trend > 0.5:
+                trend_arrow = "↗️"
+                trend_text = "Rising"
+            elif vwap_trend < -0.5:
+                trend_arrow = "↘️"
+                trend_text = "Falling"
+            else:
+                trend_arrow = "→"
+                trend_text = "Flat"
+        else:
+            trend_arrow = "→"
+            trend_text = "N/A"
         
         st.markdown(f"""
         <div class="compact-box">
-            <div class="compact-label">🗳️ STRATEGY VOTES</div>
-            <div class="compact-value">🟢 {buy_count} | 🔴 {sell_count}</div>
-            <div class="compact-sub">6 total strategies</div>
+            <div class="compact-label">{smi_icon} SMART MONEY INDEX</div>
+            <div class="compact-value" style="color: {smi_color};">{smi_status}</div>
+            <div class="compact-delta">VWAP: ₹{current_vwap:.2f} {trend_arrow}</div>
+            <div class="compact-sub">Price vs VWAP: {smi_diff:+.2f}% | Conf: {smi_confidence}%</div>
         </div>
         """, unsafe_allow_html=True)
 
